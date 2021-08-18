@@ -13,8 +13,8 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _INCLUDE__DRIVERS__DEFS__ZYNQ_H_
-#define _INCLUDE__DRIVERS__DEFS__ZYNQ_H_
+#ifndef _SRC__INCLUDE__HW__SPEC__ARM__ZYNQ_H_
+#define _SRC__INCLUDE__HW__SPEC__ARM__ZYNQ_H_
 
 namespace Zynq {
 	enum {
@@ -65,4 +65,4 @@ namespace Zynq {
 	};
 };
 
-#endif /* _INCLUDE__DRIVERS__DEFS__ZYNQ_H_ */
+#endif /* _SRC__INCLUDE__HW__SPEC__ARM__ZYNQ_H_ */

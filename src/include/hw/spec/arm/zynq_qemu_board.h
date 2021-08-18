@@ -14,7 +14,7 @@
 #ifndef _SRC__INCLUDE__HW__SPEC__ARM__ZYNQ_BOARD_H_
 #define _SRC__INCLUDE__HW__SPEC__ARM__ZYNQ_BOARD_H_
 
-#include <drivers/defs/zynq_qemu.h>
+#include <hw/spec/arm/zynq_qemu.h>
 #include <drivers/uart/xilinx.h>
 #include <hw/spec/arm/cortex_a9.h>
 #include <hw/spec/arm/pl310.h>

@@ -11,10 +11,10 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _INCLUDE__DRIVERS__DEFS__ZYNQ_QEMU_H_
-#define _INCLUDE__DRIVERS__DEFS__ZYNQ_QEMU_H_
+#ifndef _SRC__INCLUDE__HW__SPEC__ARM__ZYNQ_QEMU_H_
+#define _SRC__INCLUDE__HW__SPEC__ARM__ZYNQ_QEMU_H_
 
-#include <drivers/defs/zynq.h>
+#include <hw/spec/arm/zynq.h>
 
 namespace Zynq_qemu {
 
@@ -28,4 +28,4 @@ namespace Zynq_qemu {
 	};
 };
 
-#endif /* _INCLUDE__DRIVERS__DEFS__ZYNQ_QEMU_H_ */
+#endif /* _SRC__INCLUDE__HW__SPEC__ARM__ZYNQ_QEMU_H_ */
