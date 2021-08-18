@@ -1,0 +1,5 @@
+base
+os
+nic_session
+uplink_session
+nic_driver
