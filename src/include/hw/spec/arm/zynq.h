@@ -21,21 +21,9 @@ namespace Zynq {
 		/* device IO memory */
 		MMIO_0_BASE    = 0xe0000000, /* IOP devices */
 		MMIO_0_SIZE    = 0x10000000,
-		MMIO_1_BASE    = 0xF8000000, /* Programmable register via APB */
-		MMIO_1_SIZE    = 0x02000000,
-		QSPI_MMIO_BASE = 0xFC000000, /* Quad-SPI */
-		QSPI_MMIO_SIZE = 0x01000000,
-		OCM_MMIO_BASE  = 0xFFFC0000, /* OCM upper address range */
-		OCM_MMIO_SIZE  = 0x00040000,
 
 		/* normal RAM */
 		RAM_0_BASE = 0x00000000,
-
-		/* AXI */
-		AXI_0_MMIO_BASE = 0x40000000, /* PL AXI Slave port #0 */
-		AXI_0_MMIO_SIZE = 0x40000000,
-		AXI_1_MMIO_BASE = 0x80000000, /* PL AXI Slave port #1 */
-		AXI_1_MMIO_SIZE = 0x40000000,
 
 		/* UART controllers */
 		UART_0_MMIO_BASE = MMIO_0_BASE,
@@ -50,18 +38,8 @@ namespace Zynq {
 		CORE1_ENTRY = 0xfffffff0,
 
 		/* CPU cache */
-		PL310_MMIO_BASE      = MMIO_1_BASE + 0xF02000,
+		PL310_MMIO_BASE      = 0xF8F02000,
 		PL310_MMIO_SIZE      = 0x1000,
-
-		/* TTC (triple timer counter) */
-		TTC0_MMIO_BASE = MMIO_1_BASE + 0x1000,
-		TTC0_MMIO_SIZE = 0xfff,
-		TTC0_IRQ_0     = 42,
-
-		/* Ethernet MAC PS */
-		EMAC_0_MMIO_BASE   = 0xE000B000,
-		EMAC_0_MMIO_SIZE   = 0x1000,
-		EMAC_0_IRQ         = 54,
 	};
 };
 
