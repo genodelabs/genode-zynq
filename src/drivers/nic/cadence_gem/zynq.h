@@ -15,11 +15,6 @@
 
 namespace Zynq {
 	enum {
-		/* needed for Sclr */
-		/* TODO remove since Ethernet is already initialized by u-boot */
-		MMIO_1_BASE    = 0xF8000000,
-		MMIO_1_SIZE    = 0x02000000,
-
 		/* Ethernet 0 */
 		EMAC_0_MMIO_BASE   = 0xE000B000,
 		EMAC_0_MMIO_SIZE   = 0x1000,

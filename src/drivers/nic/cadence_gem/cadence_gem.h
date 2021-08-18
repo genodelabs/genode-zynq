@@ -26,14 +26,13 @@
 #include <drivers/nic/uplink_client_base.h>
 
 /* local includes */
-#include "system_control.h"
 #include "tx_buffer_descriptor.h"
 #include "rx_buffer_descriptor.h"
 #include "marvell_phy.h"
 
 namespace Genode
 {
-	class Cadence_gem_base
+	class Cadence_gem
 	:
 		protected Genode::Attached_mmio,
 		public Phyio
@@ -362,7 +361,6 @@ namespace Genode
 			class Unkown_ethernet_speed : public Genode::Exception {};
 
 			Timer::Connection       _timer;
-			System_control          _sys_ctrl;
 			Genode::Irq_connection  _irq;
 			Marvel_phy              _phy;
 			Tx_buffer_sink         &_tx_buffer_sink;
@@ -425,16 +423,15 @@ namespace Genode
 			 *
 			 * \param  base       MMIO base address
 			 */
-			Cadence_gem_base(Genode::Env      &env,
-			                 addr_t const      base,
-			                 size_t const      size,
-			                 int    const      irq,
-			                 Tx_buffer_sink   &tx_buffer_sink,
-			                 Rx_buffer_source &rx_buffer_source)
+			Cadence_gem(Genode::Env      &env,
+			            addr_t const      base,
+			            size_t const      size,
+			            int    const      irq,
+			            Tx_buffer_sink   &tx_buffer_sink,
+			            Rx_buffer_source &rx_buffer_source)
 			:
 				Genode::Attached_mmio(env, base, size),
 				_timer(env),
-				_sys_ctrl(env, _timer),
 				_irq(env, irq),
 				_phy(*this, _timer),
 				_tx_buffer_sink(tx_buffer_sink),
@@ -625,35 +622,24 @@ namespace Genode
 
 				_phy.init();
 
-				/* change emac clocks depending on phy autonegation result */
-				uint32_t rclk = 0;
-				uint32_t clk = 0;
 				switch (_phy.eth_speed()) {
 				case SPEED_1000:
 					write<Config::Gige_en>(1);
-					rclk = (0 << 4) | (1 << 0);
-					clk = (1 << 20) | (8 << 8) | (0 << 4) | (1 << 0);
 					log("Autonegotiation result: 1Gbit/s");
 					break;
 				case SPEED_100:
 					write<Config::Gige_en>(0);
 					write<Config::Speed_100>(1);
-					rclk = 1 << 0;
-					clk = (5 << 20) | (8 << 8) | (0 << 4) | (1 << 0);
 					log("Autonegotiation result: 100Mbit/s");
 					break;
 				case SPEED_10:
 					write<Config::Gige_en>(0);
 					write<Config::Speed_100>(0);
-					rclk = 1 << 0;
-					/* FIXME untested */
-					clk = (5 << 20) | (8 << 8) | (0 << 4) | (1 << 0);
 					log("Autonegotiation result: 10Mbit/s");
 					break;
 				default:
 					throw Unkown_ethernet_speed();
 				}
-				_sys_ctrl.set_clk(clk, rclk);
 
 
 				/* 16.3.6 Configure Interrupts */
@@ -786,7 +772,7 @@ class Genode::Uplink_client : public Uplink_client_base
 		Signal_handler<Uplink_client>          _irq_handler;
 		Constructible<Uplink_rx_buffer_source> _rx_buffer_source { };
 		Constructible<Uplink_tx_buffer_sink>   _tx_buffer_sink   { };
-		Constructible<Cadence_gem_base>        _cadence_gem      { };
+		Constructible<Cadence_gem>             _cadence_gem      { };
 
 		bool _send()
 		{
