@@ -23,6 +23,8 @@ namespace Zynq_qemu {
 	enum {
 		RAM_0_SIZE = 0x40000000, /* 1GiB */
 
+		UART_CLOCK = 50*1000*1000,
+
 		CORTEX_A9_PRIVATE_TIMER_CLK = 100000000,
 		CORTEX_A9_PRIVATE_TIMER_DIV = 100,
 	};
