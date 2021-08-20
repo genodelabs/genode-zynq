@@ -1,0 +1,617 @@
+
+                  ======================================
+                  Getting started with the Zybo Z7 board
+                  ======================================
+
+                            Johannes Schlatow
+
+
+Abstract
+########
+
+The [https://reference.digilentinc.com/programmable-logic/zybo-z7/start - Zybo Z7 board]
+is a consumer-grade Zynq-7000 board from Digilent.
+This guide is meant to provide the instructions for deploying Genode on the
+Zybo Z7 board and document the current state of development.
+
+
+Useful documents
+################
+
+* [https://reference.digilentinc.com/programmable-logic/zybo-z7/reference-manual - Zybo Z7 reference manual]
+* [https://www.xilinx.com/support/documentation/user_guides/ug585-Zynq-7000-TRM.pdf - Zynq-7000 reference manual]
+
+
+Quick start to deploy Genode on the Zybo Z7 board
+#################################################
+
+Before getting started with the Zybo Z7 board, please make sure that you have
+familiarised yourself with Genode.
+A good entry point is the
+[https://genode.org/documentation/developer-resources/getting_started - Getting Started guide].
+
+The Zybo Z7 board ships with a preinstalled demo application which is stored
+in the on-board flash memory.
+Make sure to set the jumper to QSPI boot and power on the device.
+The demo application controls the on-board LEDs and sends a few characters
+via the UART interface.
+Both are helpful to check whether the board boots up correctly and to test the
+UART connection.
+In order to test the latter, attach a Micro-USB cable to the connector labelled
+"PROG UART", connect it to your development system and power on the board.
+A '/dev/ttyUSBX' device should pop up.
+Start a terminal program of your liking (e.g. picocom, screen) and push the
+reset button to see the board's serial output.
+
+! sudo screen /dev/ttyUSB1 115200
+
+Nore, if you are already working on Sculpt (e.g. in a Linux VM for Genode development),
+you must first
+[http://genodians.org/m-stein/2021-04-29-sculpt-21-03-usb-passthough - pass through the USB device]
+to your VM.
+
+
+Preparing the SD card
+=====================
+
+As we actually want to start our own images on the Zybo Z7 board, we will prepare
+a micro SD card with the u-boot bootloader so that we can conveniently load
+and boot our images via network.
+
+A good starting point is to download a
+[https://github.com/Digilent/Petalinux-Zybo-Z7-20/releases - pre-built petalinux].
+The bsp file is actually a compressed tar archive.
+We are interested in two files: 'BOOT.BIN' and 'image.ub'.
+
+Copy these files to a freshly formatted micro SD card.
+_Make sure that the SD card has a MBR partition table, a single partition with_
+_type 0xc and the bootable flag set._
+
+Insert the SD card into the Zybo Z7 board and reset the device. When
+connected to the UART, you should see the petalinux booting.
+
+
+Creating a build directory
+==========================
+
+If you not already followed the README instructions of this repository, use the
+following command to create a build directory for the Zynq.
+
+! ./tool/create_builddir arm_v7a
+
+Don't forget to edit the 'build/arm_v7a/etc/build.conf' to add this repository:
+
+! REPOSITORIES += $(GENODE_DIR)/repos/zynq
+
+Also, the following definitions set the Zybo Z7 as the default target BOARD
+and set the corresponding options for image creation, tftp boot and serial connection.
+
+! KERNEL ?= hw
+! BOARD ?= zynq_zybo_z7
+! RUN_OPT_zybo  = --include image/uboot_fit
+! RUN_OPT_zybo += --include load/tftp
+! RUN_OPT_zybo += --load-tftp-base-dir /srv/tftp/zybo
+! RUN_OPT_zybo += --load-tftp-offset-dir /image.itb
+! RUN_OPT_zybo += --load-tftp-absolute
+! RUN_OPT_zybo += --include log/serial
+! RUN_OPT_zybo += --log-serial-cmd "picocom -b 115200 /dev/ttyUSB1"
+! BOARD_RUN_OPT(zynq_zybo_z7) = $(RUN_OPT_zybo)
+
+Don't forget to install a TFTP server on your development system.
+If you are working from Sculpt, you must also add a forwarding rule to your
+NIC router config:
+
+! <domain name="uplink">
+!   [...]
+!   <udp-forward port="69" domain="default" to="10.0.1.2" />
+! </domain>
+
+Here, '10.0.1.2' must match with the IP address of your VM.
+
+
+Enabling tftpboot on the Zybo Z7
+================================
+
+As a prerequisite, make sure that the Zybo Z7 board is connected to the Ethernet
+as your development system with the tftp server running.
+You can check output from u-boot to see whether the network connection was
+established and ensure that the board got an IP address via DHCP.
+
+In order to configure the board's u-boot for tftpboot, we can create a
+uEnv.txt file on the SD card.
+The default BOOT.BIN from petalinux loads the uEnv.txt if present and executes
+'uenvcmd'.
+
+! serverip=x.x.x.x
+! kernel_img=/srv/tftp/zybo/image.itb
+! uenvcmd=tftpboot ${load_addr} ${serverip}:${kernel_img} && bootm start && bootm loados && bootm go
+
+Note, that you must insert the IP address of your development system for 'serverip'.
+The tftpboot command pulls the 'kernel_img' from 'server_ip' and loads it into
+memory at 'load_addr'. Double check, that the 'kernel_img' corresponds to the path
+under which the image is provided by your tftp server.
+
+_Since the image.itb generated by Genode's build system does not contain a dtb,_
+_u-boot will fail with a "FDT and ATAGS support not compiled in - hanging" message_
+_when trying to boot the loaded image with a single bootm command._
+_Yet, we can leave out the OS-specific initialisations by selectively executing
+_only the relevant bootm steps as shown above._
+
+You can also enter u-boot's interactive command line and try-out the commands
+before. If you are keen, you can even use the tftpboot command to copy the uEnv.txt
+without removing the SD card:
+
+! Zynq> tftpboot 0x10000000 x.x.x.x:/srv/tftp/zybo/uEnv.txt
+! Filename '/srv/tftp/zybo/uEnv.txt'.
+! Load address: 0x10000000
+! Loading: #
+!         18.6 KiB/s
+! done
+! Bytes transferred = 154 (9a hex)
+! Zynq> fatwrite mmc 0 0x10000000 uEnv.txt 0x9a
+
+
+Build and run
+=============
+
+With the above preparations, running a scenario on the Zybo Z7 board is as simple
+as running:
+
+! make -C build/arm_v7a run/log
+
+As soon as you see 'Terminal ready' hit the reset button to reboot the device
+and boot the updated image. Alternatively, you can include one of the power_on
+scripts in your RUN_OPT to automate the reset as well.
+
+
+Dumps
+#####
+
+This section is meant to keep some platform information easily accessible.
+
+Default u-boot env
+==================
+
+The pre-built u-boot from Petalinux 2017.4-3 came with the following
+configuration:
+
+! Zynq> printenv
+! autoload=no
+! baudrate=115200
+! boot_img=BOOT.BIN
+! bootcmd=run default_bootcmd
+! bootdelay=4
+! bootenv=uEnv.txt
+! clobstart=0x10000000
+! console=console=ttyPS0,115200
+! cp_kernel2ram=mmcinfo && fatload mmc 0 ${netstart} ${kernel_img}
+! default_bootcmd=run uenvboot; run cp_kernel2ram && bootm ${netstart}
+! dtb_img=system.dtb
+! dtbnetstart=0x11800000
+! ethact=ethernet@e000b000
+! ethaddr=00:18:3e:03:93:97
+! fault=echo ${img} image size is greater than allocated place - partition ${img} \
+!       is NOT UPDATED
+! fdtcontroladdr=3ffa4ba0
+! importbootenv=echo "Importing environment from SD ..."; env import -t \
+!               ${loadbootenv_addr} $filesize
+! install_boot=mmcinfo && fatwrite mmc 0 ${clobstart} ${boot_img} ${filesize}
+! install_jffs2=sf probe 0 && sf erase ${jffs2start} ${jffs2size} && sf write \
+!               ${clobstart} ${jffs2start} ${filesize}
+! install_kernel=mmcinfo && fatwrite mmc 0 ${clobstart} ${kernel_img} ${filesize}
+! jffs2_img=rootfs.jffs2
+! kernel_img=image.ub
+! load_boot=tftpboot ${clobstart} ${boot_img}
+! load_dtb=tftpboot ${clobstart} ${dtb_img}
+! load_jffs2=tftpboot ${clobstart} ${jffs2_img}
+! load_kernel=tftpboot ${clobstart} ${kernel_img}
+! loadaddr=0x10000000
+! loadbootenv=load mmc $sdbootdev:$partid ${loadbootenv_addr} ${bootenv}
+! loadbootenv_addr=0x3EE00000
+! nc=setenv stdout nc;setenv stdin nc;
+! netboot=tftpboot ${netstart} ${kernel_img} && bootm
+! netstart=0x10000000
+! psserial0=setenv stdout ttyPS0;setenv stdin ttyPS0
+! sd_uEnvtxt_existence_test=test -e mmc $sdbootdev:$partid /uEnv.txt
+! sd_update_dtb=echo Updating dtb from SD; mmcinfo && fatload mmc 0:1 ${clobstart} \
+!               ${dtb_img} && run install_dtb
+! sd_update_jffs2=echo Updating jffs2 from SD; mmcinfo && fatload mmc 0:1 ${clobstart} \
+!                 ${jffs2_img} && run install_jffs2
+! sdbootdev=0
+! serial=setenv stdout serial;setenv stdin serial
+! serverip=10.0.2.15
+! test_crc=if imi ${clobstart}; then run test_img; else echo ${img} Bad CRC - ${img} \
+!          is NOT UPDATED; fi
+! test_img=setenv var "if test ${filesize} -gt ${psize}; then run fault; else run \
+!          ${installcmd}; fi"; run var; setenv var
+! uenvboot=if run sd_uEnvtxt_existence_test; then run loadbootenv; echo Loaded \
+!          environment from ${bootenv}; run importbootenv; fi; if test -n $uenvcmd; \
+!          then echo Running uenvcmd ...; run uenvcmd; fi
+! update_boot=setenv img boot; setenv psize ${bootsize}; setenv installcmd "install_boot"; \
+!             run load_boot ${installcmd}; setenv img; setenv psize; setenv installcmd
+! update_dtb=setenv img dtb; setenv psize ${dtbsize}; setenv installcmd "install_dtb"; \
+!            run load_dtb test_img; setenv img; setenv psize; setenv installcmd
+! update_jffs2=setenv img jffs2; setenv psize ${jffs2size}; setenv installcmd "install_jffs2"; \
+!              run load_jffs2 test_img; setenv img; setenv psize; setenv installcmd
+! update_kernel=setenv img kernel; setenv psize ${kernelsize}; setenv installcmd \
+!               "install_kernel"; run load_kernel ${installcmd}; setenv img; setenv psize; \
+!               setenv installcmd
+! 
+! Environment size: 2909/131068 bytes
+
+
+Pre-built Petalinux 2017.4-3
+============================
+
+Kernel boot
+~~~~~~~~~~~
+
+! Uncompressing Linux... done, booting the kernel.
+! Booting Linux on physical CPU 0x0
+! Linux version 4.9.0-xilinx-v2017.4 (digilent@osboxes) (gcc version 6.2.1 20161016 \
+!   (Linaro GCC 6.2-2016.11)) #1 SMP PREEMPT Wed Apr 17 13:10:48 EEST 2019
+! CPU: ARMv7 Processor [413fc090] revision 0 (ARMv7), cr=18c5387d
+! CPU: PIPT / VIPT nonaliasing data cache, VIPT aliasing instruction cache
+! OF: fdt: Machine model: Zynq Zybo Z7 Development Board
+! bootconsole [earlycon0] enabled
+! Memory policy: Data cache writealloc
+! cma: Reserved 128 MiB at 0x38000000
+! random: fast init done
+! percpu: Embedded 16 pages/cpu @ef7c5000 s34764 r8192 d22580 u65536
+! Built 1 zonelists, mobility grouping on.  Total pages: 260608
+! Kernel command line: console=ttyPS0,115200 earlyprintk uio_pdrv_genirq.of_id=generic-uio
+! PID hash table entries: 4096 (order: 2, 16384 bytes)
+! Dentry cache hash table entries: 131072 (order: 7, 524288 bytes)
+! Inode-cache hash table entries: 65536 (order: 6, 262144 bytes)
+! Memory: 847732K/1048576K available (6144K kernel code, 237K rwdata, 1544K rodata, \
+!         1024K init, 264K bss, 69772K reserved, 131072K cma-reserved, 131072K highmem)
+! Virtual kernel memory layout:
+!     vector  : 0xffff0000 - 0xffff1000   (   4 kB)
+!     fixmap  : 0xffc00000 - 0xfff00000   (3072 kB)
+!     vmalloc : 0xf0800000 - 0xff800000   ( 240 MB)
+!     lowmem  : 0xc0000000 - 0xf0000000   ( 768 MB)
+!     pkmap   : 0xbfe00000 - 0xc0000000   (   2 MB)
+!     modules : 0xbf000000 - 0xbfe00000   (  14 MB)
+!       .text : 0xc0008000 - 0xc0700000   (7136 kB)
+!       .init : 0xc0900000 - 0xc0a00000   (1024 kB)
+!       .data : 0xc0a00000 - 0xc0a3b600   ( 238 kB)
+!        .bss : 0xc0a3b600 - 0xc0a7d884   ( 265 kB)
+! Preemptible hierarchical RCU implementation.
+!         RCU restricting CPUs from NR_CPUS=4 to nr_cpu_ids=2.
+!         Tasks RCU enabled.
+! RCU: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=2
+! NR_IRQS: 16, nr_irqs: 16, preallocated irqs: 16
+! efuse mapped to f0802000
+! slcr mapped to f0804000
+! L2C: platform modifies aux control register: 0x72360000 -> 0x72760000
+! L2C: DT/platform modifies aux control register: 0x72360000 -> 0x72760000
+! L2C-310 erratum 769419 enabled
+! L2C-310 enabling early BRESP for Cortex-A9
+! L2C-310 full line of zeros enabled for Cortex-A9
+! L2C-310 ID prefetch enabled, offset 1 lines
+! L2C-310 dynamic clock gating enabled, standby mode enabled
+! L2C-310 cache controller enabled, 8 ways, 512 kB
+! L2C-310: CACHE_ID 0x410000c8, AUX_CTRL 0x76760001
+! zynq_clock_init: clkc starts at f0804100
+! Zynq clock init
+! sched_clock: 64 bits at 333MHz, resolution 3ns, wraps every 4398046511103ns
+! clocksource: arm_global_timer: mask: 0xffffffffffffffff max_cycles: 0x4ce07af025, \
+!              max_idle_ns: 440795209040 ns
+! Switching to timer-based delay loop, resolution 3ns
+! clocksource: ttc_clocksource: mask: 0xffff max_cycles: 0xffff, max_idle_ns: 537538477 ns
+! timer #0 at f080c000, irq=17
+! Console: colour dummy device 80x30
+! Calibrating delay loop (skipped), value calculated using timer frequency.. 666.66 BogoMIPS (lpj=3333333)
+! pid_max: default: 32768 minimum: 301
+! Mount-cache hash table entries: 2048 (order: 1, 8192 bytes)
+! Mountpoint-cache hash table entries: 2048 (order: 1, 8192 bytes)
+! CPU: Testing write buffer coherency: ok
+! CPU0: thread -1, cpu 0, socket 0, mpidr 80000000
+! Setting up static identity map for 0x100000 - 0x100060
+! Hierarchical SRCU implementation.
+! smp: Bringing up secondary CPUs ...
+! CPU1: thread -1, cpu 1, socket 0, mpidr 80000001
+! smp: Brought up 1 node, 2 CPUs
+! SMP: Total of 2 processors activated (1333.33 BogoMIPS).
+! CPU: All CPU(s) started in SVC mode.
+! devtmpfs: initialized
+! VFP support v0.3: implementor 41 architecture 3 part 30 variant 9 rev 4
+! clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+! futex hash table entries: 512 (order: 3, 32768 bytes)
+! pinctrl core: initialized pinctrl subsystem
+! NET: Registered protocol family 16
+! DMA: preallocated 256 KiB pool for atomic coherent allocations
+! cpuidle: using governor menu
+! hw-breakpoint: found 5 (+1 reserved) breakpoint and 1 watchpoint registers.
+! hw-breakpoint: maximum watchpoint size is 4 bytes.
+! zynq-ocm f800c000.ocmc: ZYNQ OCM pool: 256 KiB @ 0xf0880000
+! zynq-pinctrl 700.pinctrl: zynq pinctrl initialized
+! e0001000.serial: ttyPS0 at MMIO 0xe0001000 (irq = 27, base_baud = 6249999) is a xuartps
+! `��k׋��+W/�*LW�Y�X��ed
+! console [ttyPS0] enabled
+! bootconsole [earlycon0] disabled
+! bootconsole [earlycon0] disabled
+! XGpio: /amba_pl/gpio@41230000: registered, base is 1023
+! vgaarb: loaded
+! SCSI subsystem initialized
+! usbcore: registered new interface driver usbfs
+! usbcore: registered new interface driver hub
+! usbcore: registered new device driver usb
+! media: Linux media interface: v0.10
+! Linux video capture interface: v2.00
+! pps_core: LinuxPPS API ver. 1 registered
+! pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+! PTP clock support registered
+! EDAC MC: Ver: 3.0.0
+! FPGA manager framework
+! fpga-region fpga-full: FPGA Region probed
+! clocksource: Switched to clocksource arm_global_timer
+! NET: Registered protocol family 2
+! TCP established hash table entries: 8192 (order: 3, 32768 bytes)
+! TCP bind hash table entries: 8192 (order: 4, 65536 bytes)
+! TCP: Hash tables configured (established 8192 bind 8192)
+! UDP hash table entries: 512 (order: 2, 16384 bytes)
+! UDP-Lite hash table entries: 512 (order: 2, 16384 bytes)
+! NET: Registered protocol family 1
+! RPC: Registered named UNIX socket transport module.
+! RPC: Registered udp transport module.
+! RPC: Registered tcp transport module.
+! RPC: Registered tcp NFSv4.1 backchannel transport module.
+! Trying to unpack rootfs image as initramfs...
+! Freeing initrd memory: 50304K
+! hw perfevents: no interrupt-affinity property for /pmu@f8891000, guessing.
+! hw perfevents: enabled with armv7_cortex_a9 PMU driver, 7 counters available
+! workingset: timestamp_bits=30 max_order=18 bucket_order=0
+! jffs2: version 2.2. (NAND) (SUMMARY)  © 2001-2006 Red Hat, Inc.
+! bounce: pool size: 64 pages
+! io scheduler noop registered
+! io scheduler deadline registered
+! io scheduler cfq registered (default)
+! io scheduler mq-deadline registered
+! io scheduler kyber registered
+! dma-pl330 f8003000.dmac: Loaded driver for PL330 DMAC-241330
+! dma-pl330 f8003000.dmac:        DBUFF-128x8bytes Num_Chans-8 Num_Peri-4 Num_Events-16
+! xilinx-vdma 43010000.dma: Xilinx AXI VDMA Engine Driver Probed!!
+! xilinx-frmbuf 43c80000.v_frmbuf_wr: Xilinx AXI frmbuf DMA_DEV_TO_MEM
+! xilinx-frmbuf 43c80000.v_frmbuf_wr: Xilinx AXI FrameBuffer Engine Driver Probed!!
+! [drm] load() is defered & will be called again
+! brd: module loaded
+! loop: module loaded
+! m25p80 spi0.0: found s25fl128s, expected m25p80
+! m25p80 spi0.0: s25fl128s (16384 Kbytes)
+! 4 ofpart partitions found on MTD device spi0.0
+! Creating 4 MTD partitions on "spi0.0":
+! 0x000000000000-0x000000500000 : "boot"
+! 0x000000500000-0x000000520000 : "bootenv"
+! 0x000000520000-0x000000fa0000 : "kernel"
+! 0x000000fa0000-0x000001000000 : "spare"
+! libphy: Fixed MDIO Bus: probed
+! CAN device driver interface
+! libphy: MACB_mii_bus: probed
+! macb e000b000.ethernet eth0: Cadence GEM rev 0x00020118 at 0xe000b000 irq 29 (00:18:3e:03:93:97)
+! RTL8211E Gigabit Ethernet e000b000.ethernet-ffffffff:01: attached PHY driver [RTL8211E Gigabit Ethernet] \
+!   (mii_bus:phy_addr=e000b000.ethernet-ffffffff:01, irq=POLL)
+! e1000e: Intel(R) PRO/1000 Network Driver - 3.2.6-k
+! e1000e: Copyright(c) 1999 - 2015 Intel Corporation.
+! ehci_hcd: USB 2.0 'Enhanced' Host Controller (EHCI) Driver
+! ehci-pci: EHCI PCI platform driver
+! usbcore: registered new interface driver usb-storage
+! chipidea-usb2 e0002000.usb: e0002000.usb supply vbus not found, using dummy regulator
+! ULPI transceiver vendor/product ID 0x0424/0x0007
+! Found SMSC USB3320 ULPI transceiver.
+! ULPI integrity check: passed.
+! ci_hdrc ci_hdrc.0: EHCI Host Controller
+! ci_hdrc ci_hdrc.0: new USB bus registered, assigned bus number 1
+! ci_hdrc ci_hdrc.0: USB 2.0 started, EHCI 1.00
+! hub 1-0:1.0: USB hub found
+! hub 1-0:1.0: 1 port detected
+! i2c /dev entries driver
+! cdns-i2c e0004000.i2c: 100 kHz mmio e0004000 irq 23
+! cdns-i2c e0005000.i2c: 400 kHz mmio e0005000 irq 24
+! ov5640 2-003c: ov5640_read_reg: error: reg=300a
+! ov5640 2-003c: ov5640_check_chip_id: failed to read chip identifier
+! ov5640: probe of 2-003c failed with error -5
+! IR NEC protocol handler initialized
+! IR RC5(x/sz) protocol handler initialized
+! IR RC6 protocol handler initialized
+! IR JVC protocol handler initialized
+! IR Sony protocol handler initialized
+! IR SANYO protocol handler initialized
+! IR Sharp protocol handler initialized
+! IR MCE Keyboard/mouse protocol handler initialized
+! IR XMP protocol handler initialized
+! xilinx-video amba_pl:video_cap: device registered
+! xilinx-csi2rxss 43c60000.mipi_csi2_rx_subsystem: Xilinx CSI2 Rx Subsystem device found!
+! xilinx-video amba_pl:video_cap: Entity type for entity 43c60000.mipi_csi2_rx_subsystem was not initialized!
+! cdns-wdt f8005000.watchdog: Xilinx Watchdog Timer at f096a000 with timeout 10s
+! EDAC MC: ECC not enabled
+! Xilinx Zynq CpuIdle Driver started
+! sdhci: Secure Digital Host Controller Interface driver
+! sdhci: Copyright(c) Pierre Ossman
+! sdhci-pltfm: SDHCI platform and OF driver helper
+! mmc0: SDHCI controller on e0100000.sdhci [e0100000.sdhci] using ADMA
+! ledtrig-cpu: registered to indicate activity on CPUs
+! usbcore: registered new interface driver usbhid
+! usbhid: USB HID core driver
+! fpga_manager fpga0: Xilinx Zynq FPGA Manager registered
+! NET: Registered protocol family 10
+! Segment Routing with IPv6
+! sit: IPv6, IPv4 and MPLS over IPv4 tunneling driver
+! NET: Registered protocol family 17
+! can: controller area network core (rev 20170425 abi 9)
+! NET: Registered protocol family 29
+! can: raw protocol (rev 20170425)
+! can: broadcast manager protocol (rev 20170425 t)
+! can: netlink gateway (rev 20170425) max_hops=1
+! Registering SWP/SWPB emulation handler
+! mmc0: Problem switching card into high-speed mode!
+! mmc0: new SDHC card at address 0001
+! mmcblk0: mmc0:0001 00000 7.45 GiB 
+!  mmcblk0: p1
+! [drm] No max horizontal width in DT, using default 1920
+! [drm] No max vertical height in DT, using default 1080
+! OF: graph: no port node found in /amba_pl/xilinx_drm
+! [drm] Supports vblank timestamp caching Rev 2 (21.10.2013).
+! [drm] No driver support for vblank timestamp query.
+! [drm] Cannot find any crtc or sizes
+! [drm] Initialized xilinx_drm 1.0.0 20130509 for amba_pl:xilinx_drm on minor 0
+! hctosys: unable to open rtc device (rtc0)
+! of_cfs_init
+! of_cfs_init: OK
+! DOVDD_reg: disabling
+! AVDD_reg: disabling
+! DVDD_reg: disabling
+! Freeing unused kernel memory: 1024K
+! INIT: version 2.88 booting
+
+
+/proc/cpuinfo
+~~~~~~~~~~~~~
+
+! processor       : 0
+! model name      : ARMv7 Processor rev 0 (v7l)
+! BogoMIPS        : 666.66
+! Features        : half thumb fastmult vfp edsp neon vfpv3 tls vfpd32
+! CPU implementer : 0x41
+! CPU architecture: 7
+! CPU variant     : 0x3
+! CPU part        : 0xc09
+! CPU revision    : 0
+! 
+! processor       : 1
+! model name      : ARMv7 Processor rev 0 (v7l)
+! BogoMIPS        : 666.66
+! Features        : half thumb fastmult vfp edsp neon vfpv3 tls vfpd32
+! CPU implementer : 0x41
+! CPU architecture: 7
+! CPU variant     : 0x3
+! CPU part        : 0xc09
+! CPU revision    : 0
+! 
+! Hardware        : Xilinx Zynq Platform
+! Revision        : 0003
+! Serial          : 0000000000000000
+
+
+/proc/meminfo
+~~~~~~~~~~~~~
+
+! MemTotal:        1030132 kB
+! MemFree:          863852 kB
+! MemAvailable:     855328 kB
+! Buffers:              16 kB
+! Cached:           149116 kB
+! SwapCached:            0 kB
+! Active:            27172 kB
+! Inactive:         124484 kB
+! Active(anon):      27160 kB
+! Inactive(anon):   124480 kB
+! Active(file):         12 kB
+! Inactive(file):        4 kB
+! Unevictable:           0 kB
+! Mlocked:               0 kB
+! HighTotal:        262144 kB
+! HighFree:         107968 kB
+! LowTotal:         767988 kB
+! LowFree:          755884 kB
+! SwapTotal:             0 kB
+! SwapFree:              0 kB
+! Dirty:                 0 kB
+! Writeback:             0 kB
+! AnonPages:          2524 kB
+! Mapped:             5136 kB
+! Shmem:            149116 kB
+! Slab:               7960 kB
+! SReclaimable:       2132 kB
+! SUnreclaim:         5828 kB
+! KernelStack:         424 kB
+! PageTables:          196 kB
+! NFS_Unstable:          0 kB
+! Bounce:                0 kB
+! WritebackTmp:          0 kB
+! CommitLimit:      515064 kB
+! Committed_AS:     165144 kB
+! VmallocTotal:     245760 kB
+! VmallocUsed:           0 kB
+! VmallocChunk:          0 kB
+! CmaTotal:         131072 kB
+! CmaFree:          104924 kB
+
+
+/proc/iomem
+~~~~~~~~~~~
+
+! 00000000-3fffffff : System RAM
+!   00008000-008fffff : Kernel code
+!   00a00000-00a7d883 : Kernel data
+! 41600000-4160ffff : /amba_pl/i2c@41600000
+! 43010000-4301ffff : /amba_pl/dma@43010000
+! 43c10000-43c1ffff : /amba_pl/v_tc@43c10000
+! 43c20000-43c2ffff : /amba_pl/axi_dynclk@43c20000
+! 43c40000-43c4ffff : /amba_pl/axi_i2s_adi@43c40000
+! 43c50000-43c5ffff : /amba_pl/xadc_wiz@43c50000
+! 43c60000-43c7ffff : /amba_pl/mipi_csi2_rx_subsystem@43c60000
+! 43c80000-43c8ffff : /amba_pl/v_frmbuf_wr@43c80000
+! e0001000-e0001fff : xuartps
+! e0002000-e0002fff : /amba/usb@e0002000
+!   e0002000-e0002fff : /amba/usb@e0002000
+! e0004000-e0004fff : /amba/i2c@e0004000
+! e0005000-e0005fff : /amba/i2c@e0005000
+! e000a000-e000afff : /amba/gpio@e000a000
+! e000b000-e000bfff : /amba/ethernet@e000b000
+! e000d000-e000dfff : /amba/spi@e000d000
+! e0100000-e0100fff : /amba/sdhci@e0100000
+! f8003000-f8003fff : /amba/dmac@f8003000
+!   f8003000-f8003fff : /amba/dmac@f8003000
+! f8005000-f8005fff : /amba/watchdog@f8005000
+! f8007000-f80070ff : /amba/devcfg@f8007000
+! f8007100-f800711f : /amba/adc@f8007100
+! f800c000-f800cfff : /amba/ocmc@f800c000
+! fffc0000-ffffffff : f800c000.ocmc
+
+
+/proc/interrupts
+~~~~~~~~~~~~~~~~
+
+!            CPU0       CPU1
+!  16:          1          0     GIC-0  27 Edge      gt
+!  17:          0          0     GIC-0  43 Level     ttc_clockevent
+!  18:       3475       2943     GIC-0  29 Edge      twd
+!  19:          0          0     GIC-0  37 Level     arm-pmu
+!  20:          0          0     GIC-0  38 Level     arm-pmu
+!  21:         43          0     GIC-0  39 Level     f8007100.adc
+!  23:         23          0     GIC-0  57 Level     cdns-i2c
+!  24:          3          0     GIC-0  80 Level     cdns-i2c
+!  26:          0          0     GIC-0  35 Level     f800c000.ocmc
+!  27:        245          0     GIC-0  82 Level     xuartps
+!  28:          6          0     GIC-0  51 Level     e000d000.spi
+!  29:          0          0     GIC-0  54 Level     eth0
+!  30:        174          0     GIC-0  56 Level     mmc0
+!  31:          0          0     GIC-0  45 Level     f8003000.dmac
+!  32:          0          0     GIC-0  46 Level     f8003000.dmac
+!  33:          0          0     GIC-0  47 Level     f8003000.dmac
+!  34:          0          0     GIC-0  48 Level     f8003000.dmac
+!  35:          0          0     GIC-0  49 Level     f8003000.dmac
+!  36:          0          0     GIC-0  72 Level     f8003000.dmac
+!  37:          0          0     GIC-0  73 Level     f8003000.dmac
+!  38:          0          0     GIC-0  74 Level     f8003000.dmac
+!  39:          0          0     GIC-0  75 Level     f8003000.dmac
+!  40:          0          0     GIC-0  40 Level     f8007000.devcfg
+!  46:          0          0     GIC-0  53 Level     e0002000.usb
+!  47:          0          0     GIC-0  41 Edge      f8005000.watchdog
+!  48:          0          0     GIC-0  65 Level     gpio
+!  49:          1          0     GIC-0  84 Level     41600000.i2c
+!  50:          0          0     GIC-0  62 Level     dma
+!  51:          0          0     GIC-0  61 Level     xilinx-dma-controller
+!  52:          0          0     GIC-0  67 Level     xilinx-csi2rxss
+!  53:          0          0     GIC-0  68 Level     xilinx_framebuffer
+!  54:          0          0     GIC-0  64 Level     v_tc
+!  55:          0          0     GIC-0  63 Level     xilinx_vtc
+!  56:          0          0     GIC-0  66 Level     43c50000.xadc_wiz
+! IPI1:          0          0  Timer broadcast interrupts
+! IPI2:        976       1010  Rescheduling interrupts
+! IPI3:          1          2  Function call interrupts
+! IPI4:          0          0  CPU stop interrupts
+! IPI5:          0          0  IRQ work interrupts
+! IPI6:          0          0  completion interrupts
+! Err:          0
