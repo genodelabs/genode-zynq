@@ -20,22 +20,16 @@
 
 #include "buffer_descriptor.h"
 
-using namespace Genode;
+namespace Cadence_gem {
+	using namespace Genode;
+
+	template <typename SINK>
+	class Tx_buffer_descriptor;
+}
 
 
-struct Tx_buffer_sink
-{
-	virtual ~Tx_buffer_sink() { }
-
-	virtual Dataspace_capability dataspace() = 0;
-
-	virtual void acknowledge_packet(Packet_descriptor packet) = 0;
-
-	virtual bool packet_valid(Packet_descriptor packet) = 0;
-};
-
-
-class Tx_buffer_descriptor : public Buffer_descriptor
+template <typename SINK>
+class Cadence_gem::Tx_buffer_descriptor : public Buffer_descriptor
 {
 	private:
 		enum { BUFFER_COUNT = 1024 };
@@ -53,6 +47,7 @@ class Tx_buffer_descriptor : public Buffer_descriptor
 			struct Retry_limit: Bitfield<29, 1> {};
 		};
 
+		SINK              &_sink;
 		Timer::Connection &_timer;
 
 		addr_t const _phys_base;
@@ -78,9 +73,11 @@ class Tx_buffer_descriptor : public Buffer_descriptor
 		class Package_send_timeout : public Genode::Exception {};
 
 		Tx_buffer_descriptor(Genode::Env &env,
-		                     Tx_buffer_sink &sink,
+		                     SINK &sink,
 		                     Timer::Connection &timer)
-		: Buffer_descriptor(env, BUFFER_COUNT), _timer(timer),
+		: Buffer_descriptor(env, BUFFER_COUNT),
+		  _sink(sink),
+		  _timer(timer),
 		  _phys_base(Dataspace_client(sink.dataspace()).phys_addr())
 		{
 			for (size_t i=0; i <= _max_index(); i++) {
@@ -90,17 +87,17 @@ class Tx_buffer_descriptor : public Buffer_descriptor
 			}
 		}
 
-		void reset(Tx_buffer_sink &sink)
+		void reset()
 		{
 			/* ack all packets that are still queued */
-			submit_acks(sink, true);
+			submit_acks(true);
 
 			/* reset head and tail */
 			_reset_head();
 			_reset_tail();
 		}
 
-		void submit_acks(Tx_buffer_sink &sink, bool force=false)
+		void submit_acks(bool force=false)
 		{
 			/* the tail marks the descriptor for which we wait to
 			 * be handed over to software */
@@ -115,8 +112,8 @@ class Tx_buffer_descriptor : public Buffer_descriptor
 					 * and acknowledge packet */
 					const size_t length = Status::Length::get(_tail().status);
 					Nic::Packet_descriptor p((addr_t)_tail().addr - _phys_base, length);
-					if (sink.packet_valid(p))
-						sink.acknowledge_packet(p);
+					if (_sink.packet_valid(p))
+						_sink.acknowledge_packet(p);
 					else
 						warning("Invalid packet descriptor");
 

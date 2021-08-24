@@ -21,7 +21,7 @@
 #include <drivers/nic/mode.h>
 
 /* local includes */
-#include "cadence_gem.h"
+#include "uplink_client.h"
 #include "zynq.h"
 
 namespace Server {
@@ -47,7 +47,7 @@ read_mac_addr_from_config(Genode::Attached_rom_dataspace &config_rom)
 
 	/* try using configured MAC address */
 	try {
-		Genode::Xml_node nic_config = config_rom.xml().sub_node("nic");
+		Genode::Xml_node nic_config = config_rom.xml();
 		mac_addr = nic_config.attribute_value("mac", mac_addr);
 		Genode::log("Using configured MAC address ", mac_addr);
 	} catch (...) { }
@@ -60,11 +60,16 @@ struct Server::Main
 {
 	Env                                              &_env;
 	Heap                                              _heap          { _env.ram(), _env.rm() };
-	Constructible<Uplink_client>                      _uplink_client { };
+
+	/* TODO remove Constructible */
+	Constructible<Cadence_gem::Device>                _device        { };
+	Constructible<Cadence_gem::Uplink_client>         _uplink_client { };
 
 	Main(Env &env) : _env(env)
 	{
 		Attached_rom_dataspace config_rom { _env, "config" };
+
+		/* TODO get MMIO address from platform session */
 
 		const unsigned interface = config_rom.xml().attribute_value("interface", (unsigned)0);
 
@@ -75,9 +80,11 @@ struct Server::Main
 		const size_t mmio_size = (interface == 1) ? Zynq::EMAC_1_MMIO_SIZE : Zynq::EMAC_0_MMIO_SIZE;
 		const int    irq       = (interface == 1) ? Zynq::EMAC_1_IRQ       : Zynq::EMAC_0_IRQ;
 
-		_uplink_client.construct(
-			_env, _heap, mmio_base, mmio_size,
-			irq, read_mac_addr_from_config(config_rom));
+		_device.construct(_env, mmio_base, mmio_size, irq);
+
+		/* TODO don't set MAC if not configured (let u-boot do that) */
+		_uplink_client.construct(_env, _heap, *_device,
+		                         read_mac_addr_from_config(config_rom));
 	}
 };
 

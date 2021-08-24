@@ -415,7 +415,7 @@ namespace Genode
 
 			int phy_reset()
 			{
-				int timeout = 500;
+				int timeout = 50;
 
 				Bmcr::access_t reg = phy_read<Bmcr>();
 				Bmcr::Reset::set(reg, 1);
@@ -427,7 +427,7 @@ namespace Genode
 				 * IEEE spec.
 				 */
 				while (phy_read<Bmcr::Reset>() && timeout--) {
-					_timer.msleep(1);
+					_timer.msleep(10);
 				}
 
 				if (phy_read<Bmcr::Reset>()) {

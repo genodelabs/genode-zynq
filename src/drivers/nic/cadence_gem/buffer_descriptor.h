@@ -19,10 +19,14 @@
 #include <base/attached_ram_dataspace.h>
 #include <util/mmio.h>
 
-using namespace Genode;
+namespace Cadence_gem {
+	using namespace Genode;
+
+	class Buffer_descriptor;
+}
 
 
-class Buffer_descriptor : protected Attached_ram_dataspace, protected Mmio
+class Cadence_gem::Buffer_descriptor : protected Attached_ram_dataspace, protected Mmio
 {
 	public:
 		static const size_t BUFFER_DESC_SIZE = 0x08;

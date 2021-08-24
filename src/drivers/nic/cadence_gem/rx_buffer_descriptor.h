@@ -17,20 +17,15 @@
 
 #include "buffer_descriptor.h"
 
-using namespace Genode;
+namespace Cadence_gem {
+	using namespace Genode;
 
+	template <typename SOURCE>
+	class Rx_buffer_descriptor;
+}
 
-struct Rx_buffer_source
-{
-	virtual ~Rx_buffer_source() { }
-
-	virtual Dataspace_capability dataspace() = 0;
-
-	virtual Packet_descriptor alloc_packet(size_t size) = 0;
-};
-
-
-class Rx_buffer_descriptor : public Buffer_descriptor
+template <typename SOURCE>
+class Cadence_gem::Rx_buffer_descriptor : public Buffer_descriptor
 {
 	private:
 
@@ -71,8 +66,8 @@ class Rx_buffer_descriptor : public Buffer_descriptor
 		}
 
 	public:
-		Rx_buffer_descriptor(Genode::Env      &env,
-		                     Rx_buffer_source &source)
+		Rx_buffer_descriptor(Genode::Env  &env,
+		                     SOURCE       &source)
 		: Buffer_descriptor(env, MAX_BUFFER_COUNT),
 		  _phys_base(Dataspace_client(source.dataspace()).phys_addr())
 		{
@@ -129,7 +124,7 @@ class Rx_buffer_descriptor : public Buffer_descriptor
 			if (!_head_available())
 				return Nic::Packet_descriptor(0, 0);
 
-			const Status::access_t status = _head().status;
+			const typename Status::access_t status = _head().status;
 			if (!Status::Start_of_frame::get(status) || !Status::End_of_frame::get(status)) {
 				warning("Packet split over more than one descriptor. Packet ignored!");
 
