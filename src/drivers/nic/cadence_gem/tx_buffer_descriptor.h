@@ -16,6 +16,7 @@
 #define _INCLUDE__DRIVERS__NIC__CADENCE_GEM__TX_BUFFER_DESCRIPTOR_H_
 
 #include <base/log.h>
+#include <cpu/cache.h>
 #include <timer_session/connection.h>
 
 #include "buffer_descriptor.h"
@@ -51,6 +52,7 @@ class Cadence_gem::Tx_buffer_descriptor : public Buffer_descriptor
 		Timer::Connection &_timer;
 
 		addr_t const _phys_base;
+		addr_t const _virt_base;
 
 		void _reset_descriptor(unsigned const i, addr_t phys_addr) {
 			if (i > _max_index())
@@ -78,7 +80,8 @@ class Cadence_gem::Tx_buffer_descriptor : public Buffer_descriptor
 		: Buffer_descriptor(env, BUFFER_COUNT),
 		  _sink(sink),
 		  _timer(timer),
-		  _phys_base(Dataspace_client(sink.dataspace()).phys_addr())
+		  _phys_base(Dataspace_client(sink.dataspace()).phys_addr()),
+		  _virt_base(env.rm().attach(sink.dataspace()))
 		{
 			for (size_t i=0; i <= _max_index(); i++) {
 				/* configure all descriptors with address 0, which we
@@ -148,9 +151,13 @@ class Cadence_gem::Tx_buffer_descriptor : public Buffer_descriptor
 			}
 
 			addr_t const packet_phys = _phys_base + p.offset();
+			addr_t const packet_virt = _virt_base + p.offset();
+
 			if (packet_phys & 0x1f) {
 				warning("Packet is not aligned properly.");
 			}
+
+			cache_clean_invalidate_data(packet_virt, p.size());
 
 			/* wait until the used bit is set (timeout after 10ms) */
 			uint32_t timeout = 10000;
