@@ -46,6 +46,7 @@ class Cadence_gem::Tx_buffer_descriptor : public Buffer_descriptor
 			struct Late_collision: Bitfield<26, 1> {};
 			struct Corrupt: Bitfield<27, 1> {};
 			struct Retry_limit: Bitfield<29, 1> {};
+			struct Error : Bitfield<20,10> {};
 		};
 
 		SINK              &_sink;
@@ -135,6 +136,12 @@ class Cadence_gem::Tx_buffer_descriptor : public Buffer_descriptor
 
 					if (Status::Crc_present::get(_tail().status))
 						warning("CRC already present - this impedes checksum offloading");
+
+					if (Status::Chksum_err::get(_tail().status))
+						warning("Tx checksum error: ", Status::Chksum_err::get(_tail().status));
+
+					if (Status::Error::get(_tail().status))
+						warning("Unknown error: ", Status::Error::get(_tail().status));
 				}
 
 				_advance_tail();

@@ -125,7 +125,7 @@ class Cadence_gem::Device
 					Rx_pktbuf_memsz_sel::bits(Rx_pktbuf_memsz_sel::SPACE_8KB) |
 					Tx_pktbuf_memsz_sel::bits(Tx_pktbuf_memsz_sel::SPACE_4KB) |
 					Disc_when_no_ahb::bits(1) |
-					Csum_gen_en::bits(1) |
+					Csum_gen_en::bits(0) |
 					Burst_len::bits(Burst_len::INCR16);
 			}
 		};
@@ -136,10 +136,14 @@ class Cadence_gem::Device
 		struct Tx_status : Register<0x14, 32>
 		{
 			struct Tx_hresp_nok    : Bitfield<8, 1> {};
+			struct Late_collision  : Bitfield<7, 1> {};
 			struct Tx_err_underrun : Bitfield<6, 1> {};
 			struct Tx_complete     : Bitfield<5, 1> {};
 			struct Tx_err_bufexh   : Bitfield<4, 1> {};
 			struct Tx_go           : Bitfield<3, 1> {};
+			struct Tx_retry_limit  : Bitfield<2, 1> {};
+			struct Collision       : Bitfield<1, 1> {};
+			struct Used_bit_read   : Bitfield<0, 1> {};
 		};
 
 		/**
@@ -176,6 +180,7 @@ class Cadence_gem::Device
 		{
 			struct Rx_used_read   : Bitfield<2, 1> {};
 			struct Rx_complete    : Bitfield<1, 1> {};
+			struct Tx_complete    : Bitfield<7, 1> {};
 			struct Pause_zero     : Bitfield<13,1> {};
 			struct Pause_received : Bitfield<12,1> {};
 			struct Rx_overrun     : Bitfield<10,1> {};
@@ -474,6 +479,16 @@ class Cadence_gem::Device
 			}
 			else {
 				handle_acks();
+			}
+
+			if (Interrupt_status::Tx_complete::get(status)
+			 || Tx_status::Tx_complete::get(txStatus)) {
+
+				/* reset interrupt status */
+				write<Tx_status>(Tx_status::Tx_complete::bits(1));
+				write<Interrupt_status>(Interrupt_status::Tx_complete::bits(1));
+
+				/* TODO if there is a pending packet, continue sending */
 			}
 
 			/* handle Rx/Tx errors */
