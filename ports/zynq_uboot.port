@@ -1,0 +1,12 @@
+LICENSE := GPLv2
+VERSION := 2
+
+DOWNLOADS := uboot.git
+
+REV(uboot) := v2021.07
+URL(uboot) := https://github.com/u-boot/u-boot.git \
+              --branch ${REV(uboot)} --depth 1 --no-checkout
+DIR(uboot) := uboot
+
+PATCHES    := src/u-boot/zynq/usrp.patch
+PATCH_OPT  := -p1 --directory=uboot
