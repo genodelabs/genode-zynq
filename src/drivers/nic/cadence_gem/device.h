@@ -420,7 +420,7 @@ class Cadence_gem::Device
 			Platform::Device::Mmio(device),
 			_timer(env),
 			_irq(device),
-			_phy(*this, _timer)
+			_phy(*this)
 		{
 			deinit();
 			init();
@@ -631,8 +631,6 @@ class Cadence_gem::Device
 			 * Enable MDIO, transmitter and receiver
 			 */
 			write<Control>(Control::init());
-
-			_phy.init();
 
 			switch (_phy.eth_speed()) {
 			case SPEED_1000:
