@@ -18,6 +18,7 @@
 #include <base/log.h>
 #include <cpu/cache.h>
 #include <timer_session/connection.h>
+#include <nic_session/nic_session.h>
 
 #include "buffer_descriptor.h"
 

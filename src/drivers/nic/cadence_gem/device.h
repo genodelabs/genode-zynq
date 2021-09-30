@@ -16,10 +16,8 @@
 #define _INCLUDE__DRIVERS__NIC__CADENCE_GEM__DEVICE_H_
 
 /* Genode includes */
-#include <os/attached_mmio.h>
-#include <nic_session/nic_session.h>
-#include <irq_session/connection.h>
 #include <timer_session/connection.h>
+#include <platform_session/device.h>
 
 /* local includes */
 #include "marvell_phy.h"
@@ -33,7 +31,7 @@ namespace Cadence_gem
 
 class Cadence_gem::Device
 :
-	protected Genode::Attached_mmio,
+	protected Platform::Device::Mmio,
 	public Phyio
 {
 	private:
@@ -359,7 +357,7 @@ class Cadence_gem::Device
 		class Unkown_ethernet_speed : public Genode::Exception {};
 
 		Timer::Connection       _timer;
-		Genode::Irq_connection  _irq;
+		Platform::Device::Irq   _irq;
 		Marvel_phy              _phy;
 
 		void _mdio_wait()
@@ -415,17 +413,13 @@ class Cadence_gem::Device
 
 		/**
 		 * Constructor
-		 *
-		 * \param  base       MMIO base address
 		 */
 		Device(Genode::Env      &env,
-		       addr_t const      base, /* TODO take from platform session */
-		       size_t const      size, /* TODO take from platform session */
-		       int    const      irq)  /* TODO take from platform session */
+		       Platform::Device &device)
 		:
-			Genode::Attached_mmio(env, base, size),
+			Platform::Device::Mmio(device),
 			_timer(env),
-			_irq(env, irq),
+			_irq(device),
 			_phy(*this, _timer)
 		{
 			deinit();
@@ -589,7 +583,7 @@ class Cadence_gem::Device
 		void irq_sigh(Signal_context_capability cap) {
 			_irq.sigh(cap); }
 		
-		void irq_ack() { _irq.ack_irq(); }
+		void irq_ack() { _irq.ack(); }
 
 		void enable(addr_t rx_base=0, addr_t tx_base=0)
 		{

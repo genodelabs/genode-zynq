@@ -15,6 +15,7 @@
 #ifndef _INCLUDE__DRIVERS__NIC__CADENCE_GEM__RX_BUFFER_DESCRIPTOR_H_
 #define _INCLUDE__DRIVERS__NIC__CADENCE_GEM__RX_BUFFER_DESCRIPTOR_H_
 
+#include <nic_session/nic_session.h>
 #include "buffer_descriptor.h"
 
 namespace Cadence_gem {
