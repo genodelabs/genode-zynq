@@ -471,9 +471,6 @@ class Cadence_gem::Device
 				write<Rx_status>(Rx_status::Frame_received::bits(1));
 				write<Interrupt_status>(Interrupt_status::Rx_complete::bits(1));
 			}
-			else {
-				handle_acks();
-			}
 
 			if (Interrupt_status::Tx_complete::get(status)
 			 || Tx_status::Tx_complete::get(txStatus)) {
@@ -527,7 +524,8 @@ class Cadence_gem::Device
 				print_stats = true;
 				Genode::error("Rx overrun - packet buffer overflow");
 			}
-			if (Interrupt_status::Rx_used_read::get(status)) {
+			if (Interrupt_status::Rx_used_read::get(status)
+			 && Rx_status::Buffer_not_available::get(rxStatus)) {
 				/* tried to use buffer descriptor with used bit set */
 				/* we sent a pause frame because the buffer appears to
 				 * be full

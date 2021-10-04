@@ -70,8 +70,11 @@ class Cadence_gem::Uplink_client : public Uplink_client_base
 
 		void _handle_acks()
 		{
-			while (_conn->tx()->ack_avail())
-				_rx_buffer->reset_descriptor(_conn->tx()->get_acked_packet());
+			while (_conn->tx()->ack_avail()) {
+				Packet_descriptor pd = _conn->tx()->get_acked_packet();
+				_rx_buffer->reset_descriptor(pd);
+				_conn->tx()->release_packet(pd);
+			}
 		}
 
 		void _handle_irq()
@@ -113,7 +116,17 @@ class Cadence_gem::Uplink_client : public Uplink_client_base
 			while (_send());
 		}
 
+		void _custom_conn_tx_handle_ack_avail() override
+		{
+			_handle_acks();
+		}
+
 		bool _custom_conn_rx_packet_avail_handler() override
+		{
+			return true;
+		}
+
+		bool _custom_conn_tx_ack_avail_handler() override
 		{
 			return true;
 		}
@@ -144,8 +157,6 @@ class Cadence_gem::Uplink_client : public Uplink_client_base
 
 			_device.irq_sigh(_irq_handler);
 			_device.irq_ack();
-
-			/* TODO implement mac reporting */
 
 			/* set mac address */
 			_device.write_mac_address(mac_addr);
