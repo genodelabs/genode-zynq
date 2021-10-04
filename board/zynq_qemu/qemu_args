@@ -1,0 +1,1 @@
+-M xilinx-zynq-a9 -cpu cortex-a9 -m 1024
