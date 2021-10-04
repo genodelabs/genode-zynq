@@ -48,6 +48,14 @@ struct Board::L2_cache : Hw::Pl310
 		Aux::Inst_prefetch::set(aux, true);
 		Aux::Early_bresp::set(aux, true);
 		write<Aux>(aux);
+
+		write<Tag_ram>(Tag_ram::Setup_latency::bits(1)
+		             | Tag_ram::Write_latency::bits(1)
+		             | Tag_ram::Read_latency::bits(1));
+
+		write<Data_ram>(Tag_ram::Setup_latency::bits(1)
+		              | Tag_ram::Write_latency::bits(1)
+		              | Tag_ram::Read_latency::bits(2));
 	}
 
 	using Hw::Pl310::invalidate;
