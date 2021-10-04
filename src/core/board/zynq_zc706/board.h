@@ -16,18 +16,21 @@
 #ifndef _CORE__BOARD__ZYNQ_ZC706__BOARD_H_
 #define _CORE__BOARD__ZYNQ_ZC706__BOARD_H_
 
-/* core includes */
+/* base-hw internal includes */
+#include <hw/spec/arm/gicv2.h>
 #include <hw/spec/arm/zynq_zc706_board.h>
-#include <drivers/uart/xilinx.h>
 
-#include <hw/spec/arm/boot_info.h>
-#include <hw/spec/arm/cortex_a9.h>
-#include <hw/spec/arm/pl310.h>
+/* base-hw Core includes */
 #include <spec/arm/cortex_a9_private_timer.h>
+#include <spec/cortex_a9/cpu.h>
+#include <hw/spec/arm/pl310.h>
 
 namespace Board {
 	using namespace Hw::Zynq_zc706_board;
 	using L2_cache = Hw::Pl310;
+
+	class Global_interrupt_controller { };
+	class Pic : public Hw::Gicv2 { public: Pic(Global_interrupt_controller &) { } };
 
 	L2_cache & l2_cache();
 }

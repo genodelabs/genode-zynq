@@ -18,14 +18,12 @@
 #include <drivers/uart/xilinx.h>
 #include <hw/spec/arm/cortex_a9.h>
 #include <hw/spec/arm/boot_info.h>
-#include <hw/spec/arm/gicv2.h>
 
 namespace Hw::Zynq_usrp_e31x_board {
 
 	using namespace Zynq_usrp_e31x;
 	using Cpu_mmio = Hw::Cortex_a9_mmio<CORTEX_A9_PRIVATE_MEM_BASE>;
 	using Serial   = Genode::Xilinx_uart;
-	using Pic      = Hw::Gicv2;
 
 	enum {
 		UART_BASE  = UART_0_MMIO_BASE,

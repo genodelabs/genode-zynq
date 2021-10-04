@@ -18,14 +18,12 @@
 #include <drivers/uart/xilinx.h>
 #include <hw/spec/arm/cortex_a9.h>
 #include <hw/spec/arm/boot_info.h>
-#include <hw/spec/arm/gicv2.h>
 
 namespace Hw::Zynq_zybo_z7_board {
 
 	using namespace Zynq_zybo_z7;
 	using Cpu_mmio = Hw::Cortex_a9_mmio<CORTEX_A9_PRIVATE_MEM_BASE>;
 	using Serial   = Genode::Xilinx_uart;
-	using Pic      = Hw::Gicv2;
 
 	enum {
 		UART_BASE  = UART_1_MMIO_BASE,
