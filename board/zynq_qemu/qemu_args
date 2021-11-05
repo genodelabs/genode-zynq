@@ -1,1 +1,3 @@
 -M xilinx-zynq-a9 -cpu cortex-a9 -m 1024
+-net nic,model=cadence_gem,netdev=net0
+-netdev user,id=net0
