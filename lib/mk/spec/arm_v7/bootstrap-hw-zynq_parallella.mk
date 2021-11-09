@@ -1,3 +1,5 @@
+REQUIRES = hw
+
 REP_INC_DIR += src/bootstrap/board/zynq_parallella
 
 SRC_S   += bootstrap/spec/arm/crt0.s

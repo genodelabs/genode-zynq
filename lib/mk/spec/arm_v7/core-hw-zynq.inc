@@ -4,6 +4,8 @@
 # \date   2014-12-15
 #
 
+REQUIRES = hw
+
 # add C++ sources
 SRC_CC += platform_services.cc
 

@@ -1,3 +1,5 @@
+REQUIRES = hw
+
 REP_INC_DIR += src/bootstrap/board/zynq_zybo_z7
 
 SRC_S   += bootstrap/spec/arm/crt0.s
