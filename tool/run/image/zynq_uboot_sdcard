@@ -1,6 +1,24 @@
+##
+# Build SD card image with U-boot
+#
+# \param --image-uboot-bitstream    path to a bitstream file
+#
+
+
+##
+# Check if the uImage should be gzipped
+#
+proc image_uboot_use_no_gzip { } { return [get_cmd_switch --image-uboot-no-gzip] }
+
+##
+# Whether and which bitstream to include
+#
+proc image_uboot_bitstream   { } { return [get_cmd_arg --image-uboot-bitstream ""] }
+
 proc run_image {elf_img} {
 
 	set mcopy     [installed_command mcopy]
+	set mkimage   [installed_command mkimage]
 
 	#
 	# Build U-Boot if needed
@@ -27,7 +45,7 @@ proc run_image {elf_img} {
 	exec mkdir -p [run_dir]/ext2
 	exec [cross_dev_prefix]objcopy -O binary $elf_img $bin_img
 	exec gzip --best --force $bin_img
-	exec mkimage -A arm -O linux -T kernel -C gzip -a $load_addr \
+	exec $mkimage -A arm -O linux -T kernel -C gzip -a $load_addr \
 	              -e $entrypoint -d $bin_img.gz $uboot_img
 	exec rm -rf $bin_img.gz
 
@@ -38,7 +56,15 @@ proc run_image {elf_img} {
 	set img_file [run_dir].img.incomplete
 
 	exec cp $base_img $img_file
-	exec mcopy -i $img_file@@1M $uboot_img ::
+	exec $mcopy -i $img_file@@1M $uboot_img ::
+
+	#
+	# Inject bitstream with mcopy
+	#
+	set bitstream [image_uboot_bitstream]
+	if {[string length $bitstream] > 0} {
+		exec $mcopy -i $img_file@@1M $bitstream ::fpga.bit
+	}
 
 	exec mv $img_file [run_dir].img
 
