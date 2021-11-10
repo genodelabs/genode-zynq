@@ -45,7 +45,7 @@ reset button to see the board's serial output.
 
 ! sudo screen /dev/ttyUSB1 115200
 
-Nore, if you are already working on Sculpt (e.g. in a Linux VM for Genode development),
+Note, if you are already working on Sculpt (i.e. in a Linux VM hosted on Sculpt),
 you must first
 [http://genodians.org/m-stein/2021-04-29-sculpt-21-03-usb-passthough - pass through the USB device]
 to your VM.
@@ -94,9 +94,16 @@ Preparing the SD card
 
 For initialising a blank SD card with a bootable scenario, you can build a
 complete SD card image as follows.
-First, add the following to your 'build/arm_v7a/etc/build.conf':
+First, make sure, that you have an 'mkimage' binary available, which is provided
+by 'u-boot-tools' on Ubuntu. You also need 'mtools', which provides the 'mcopy'
+binary. You must also prepare the zynq_uboot port by executing the following
+command from genode directory:
 
-! RUN_OPT += --include image/pine_uboot_sdcard
+! ./tool/ports/prepare_port zynq_uboot
+
+Second, add the following to your 'build/arm_v7a/etc/build.conf':
+
+! RUN_OPT += --include image/zynq_uboot_sdcard
 
 Next, run the following commands to build the image file and to write it to
 an SD card.
@@ -139,9 +146,9 @@ Here, '10.0.1.2' must match with the IP address of your VM.
 Enabling tftpboot on the Zybo Z7
 ================================
 
-As a prerequisite, make sure that the Zybo Z7 board is connected to the Ethernet
-as your development system with the tftp server running.
-You can check output from u-boot to see whether the network connection was
+As a prerequisite, make sure that the Zybo Z7 board is connected to the same
+network as your development system with the tftp server is connected.
+You can check the output from u-boot to see whether the network connection was
 established and ensure that the board got an IP address via DHCP.
 
 In order to configure the board's u-boot for tftpboot, we can create a
