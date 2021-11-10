@@ -1,0 +1,199 @@
+
+                  ==================================
+                  Getting started with the USRP e310
+                  ==================================
+
+                            Johannes Schlatow
+
+
+Abstract
+########
+
+The USRP e310 is a "Universal Software Radio Peripheral" by Ettus Research.
+It bases on a Zynq-7000 SoC and a AD9361 RF transceiver from Analog Devices.
+
+Since the transceiver is partly driven by the FPGA, the software support heavily
+depends on the bitstream used for the FPGA. Note, that we use a customised
+FPGA design based on the reference design by Analog Devices for th AD9361.
+Note, that the reference design by Ettus Research contains entirely different
+IP cores and is therefore not supported.
+
+Useful documents
+################
+
+* [https://kb.ettus.com/Ettus_USRP_E300_Embedded_Family_Hardware_Resources - Ettus Knowledge Base USRP e31x]
+* [https://files.ettus.com/manual/page_usrp_e3xx.html - USRP e31x manual]
+* [https://wiki.analog.com/resources/eval/user-guides/ad-fmcomms2-ebz/reference_hdl - reference design by Analog Devices]
+* [https://wiki.analog.com/resources/fpga/docs/axi_ad9361 - axi_ad9361 IP core]
+* [https://wiki.analog.com/resources/fpga/docs/axi_dmac - axi_dmac IP core]
+* [https://wiki.analog.com/resources/eval/user-guides/ad-fmcomms2-ebz/ad9361 - ad9361]
+* [https://wiki.analog.com/resources/tools-software/linux-drivers/iio-transceiver/ad9361-customization - ad9361 driver customisation]
+* [https://github.com/analogdevicesinc/no-OS/ - no-OS drivers by Analog Devices]
+* [https://kb.ettus.com/UHD - for reference: Ettus Research HW/SW Stack]
+
+
+Quick start to deploy Genode on the USRP e310
+#############################################
+
+Before getting started with the USRP, please make sure that you have
+familiarised yourself with Genode.
+A good entry point is the
+[https://genode.org/documentation/developer-resources/getting_started - Getting Started guide],
+which transfers the bare minimum but mandatory knowledge.
+
+If you already have an SD card with a preinstalled application for the USRP,
+you can attach a micro-USB cable to the USRP and connect it to your Linux host
+in order to test your hardware setup.
+A '/dev/ttyUSB0' device should pop up even if the USRP is not powered on.
+Start a terminal program of your liking (e.g. picocom, screen) and push power on
+button to see the board's serial output.
+
+! sudo screen /dev/ttyUSB1 115200
+
+Note, if you are already working on Sculpt (i.e. in a Linux VM hosted on Sculpt),
+you must first
+[http://genodians.org/m-stein/2021-04-29-sculpt-21-03-usb-passthough - pass through the USB device]
+to your VM.
+
+
+Creating a build directory
+==========================
+
+If you not already followed the README instructions of this repository, use the
+following command to create a build directory for the Zynq.
+
+! ./tool/create_builddir arm_v7a
+
+Don't forget to edit the 'build/arm_v7a/etc/build.conf' to add this repository:
+
+! REPOSITORIES += $(GENODE_DIR)/repos/zynq
+
+Optionally, the following definitions set the USRP as the default target BOARD and
+base-hw as the default kernel.
+
+! BOARD ?= zynq_usrp_e31x
+! KERNEL ?= hw
+
+
+Preparing the SD card
+=====================
+
+For initialising a blank SD card with a bootable scenario, you can build a
+complete SD card image as follows.
+First, make sure, that you have an 'mkimage' binary available, which is provided
+by 'u-boot-tools' on Ubuntu. You also need 'mtools', which provides the 'mcopy'
+binary. You must also prepare the zynq_uboot port by executing the following
+command from genode directory:
+
+! ./tool/ports/prepare_port zynq_uboot
+
+Second, add the following to your 'build/arm_v7a/etc/build.conf':
+
+! RUN_OPT_usrp  = --include image/uboot
+! RUN_OPT_usrp += --include image/zynq_uboot_sdcard
+! RUN_OPT_usrp += --image_uboot_bitstream /path/to/your/bitstream
+! BOARD_RUN_OPT(zynq_usrp_e31x) = $(RUN_OPT_usrp)
+
+The second line is optional and has the effect that the given bitstream file
+will be included in the image and automatically loaded by u-boot.
+
+Next, run the following commands to build the image file and to write it to
+an SD card.
+
+! build/arm_v7a$ make run/log KERNEL=hw BOARD=zynq_usrp_e31x
+! ...
+! Created SD-card image file var/run/log.img
+! build/arm_v7a$ sudo dd if=var/run/log.img of=/dev/mmcblkX bs=1M conv=fsync
+
+_Do not forget to adjust /dev/mmcblkX to the device of your SD card._
+
+Usually, this step is only required once or for deploying a certain scenario on
+the SD card. For maximum enjoyment of development, we prefer booting via TFTP and
+thereby omit fiddling with SD card.
+
+
+Enabling run-tool plugins for tftpboot
+======================================
+
+Edit 'build/arm_v7a/etc/build.conf' to create a bootable u-boot image and to use
+tftp boot and a serial connection.
+
+! RUN_OPT_usrp  = --include image/uboot
+! RUN_OPT_usrp += --include load/tftp
+! RUN_OPT_usrp += --load-tftp-base-dir /srv/tftp/usrp
+! RUN_OPT_usrp += --load-tftp-offset-dir /uImage
+! RUN_OPT_usrp += --load-tftp-absolute
+! RUN_OPT_usrp += --include log/serial
+! RUN_OPT_usrp += --log-serial-cmd "picocom -b 115200 /dev/ttyUSB0"
+! BOARD_RUN_OPT(zynq_usrp_e31x) = $(RUN_OPT_usrp)
+
+Don't forget to install a TFTP server on your development system and to check
+that the base directory given by '--load-tftp-base-dir' is served by your TFTP
+server. If you are working from Sculpt, you must also add a forwarding rule to
+your NIC router config:
+
+! <domain name="uplink">
+!   [...]
+!   <udp-forward port="69" domain="default" to="10.0.1.2" />
+! </domain>
+
+Here, '10.0.1.2' must match with the IP address of your VM.
+
+
+Enabling tftpboot on the USRP e310
+==================================
+
+As a prerequisite, make sure that the Zybo Z7 board is connected to the Ethernet
+as your development system with the tftp server running.
+You can check output from u-boot to see whether the network connection was
+established and ensure that the board got an IP address via DHCP.
+
+In order to configure the board's u-boot for tftpboot, we can create a
+uEnv.txt file on the SD card.
+Our u-boot loads the uEnv.txt if present and executes 'uenvcmd'.
+
+! serverip=x.x.x.x
+! kernel_img=/srv/tftp/usrp/uImage
+! uenvcmd=tftpboot ${load_addr} ${serverip}:${kernel_img} && bootm start && bootm loados && bootm go
+
+You may also set a MAC address by defining 'ethaddr=...' in your uEnv.txt.
+Otherwise, u-boot will generate a random MAC address.
+
+Note, that you must insert the IP address of your development system for 'serverip'.
+The tftpboot command pulls the 'kernel_img' from 'server_ip' and loads it into
+memory at 'load_addr'. Double check, that the 'kernel_img' corresponds to the path
+under which the image is provided by your tftp server.
+
+_Since we do not provide a dtb,_
+_u-boot will fail with a "FDT and ATAGS support not compiled in - hanging" message_
+_when trying to boot the loaded image with a single bootm command._
+_Yet, we can leave out the OS-specific initialisations by selectively executing
+_only the relevant bootm steps as shown above._
+
+You can also enter u-boot's interactive command line and try-out the commands
+before. If you are keen, you can even use the tftpboot command to copy the uEnv.txt
+without removing the SD card:
+
+! Zynq> tftpboot 0x10000000 x.x.x.x:/srv/tftp/usrp/uEnv.txt
+! Filename '/srv/tftp/usrp/uEnv.txt'.
+! Load address: 0x10000000
+! Loading: #
+!         18.6 KiB/s
+! done
+! Bytes transferred = 154 (9a hex)
+! Zynq> fatwrite mmc 0 0x10000000 uEnv.txt ${filesize}
+
+
+Build and run
+=============
+
+With the above preparations, executing a run script on the USRP is as simple
+as running:
+
+! make -C build/arm_v7a run/log
+
+As soon as you see 'Terminal ready' hit the power button to reboot the device
+and boot the updated image. Alternatively, you can include one of the power_on
+scripts in your RUN_OPT to automate the reset as well.
+
+
