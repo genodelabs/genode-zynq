@@ -26,7 +26,7 @@ namespace Zynq_usrp_e31x {
 		 *   - PLL = 52 * PS_CLK
 		 *   - CPU_6x4x = PLL / 2
 		 */
-		CPU_1X_CLOCK   = 144444400,
+		CPU_1X_CLOCK   = 111111110,
 		CPU_3X2X_CLOCK = 3*CPU_1X_CLOCK,
 		CPU_6X4X_CLOCK = 6*CPU_1X_CLOCK,
 
