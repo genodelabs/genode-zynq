@@ -1,0 +1,17 @@
+Driver for powering, initialising and configuring a Xilinx FPGA via the
+PCAP interface.
+
+An examplary configuration of the component is shown below:
+
+! <config bitstream="/bitstreams/fpga.bit" enable="yes">
+!   <vfs>
+!     <dir name="bitstreams">
+!       <rom name="fpga.bit"/>
+!     </dir>
+!   </vfs>
+! </config>
+
+The bitstream to be loaded is made available to the component via the vfs. The
+path where the bitstream is found must thus be specified by the 'bitstream'
+attribute. The state of the FPGA, i.e. whether to load a bitstream or merely
+rest the FPGA, is defined by the 'enable' attribute.

@@ -1,0 +1,174 @@
+#
+# Build
+#
+
+create_boot_directory
+
+import_from_depot [depot_user]/src/[base_src] \
+                  [depot_user]/src/rom_filter \
+                  [depot_user]/src/report_rom
+
+
+# generic components
+set build_components {
+	core init timer
+	drivers/platform
+	drivers/fpga
+	app/rom_logger
+}
+
+build $build_components
+
+
+#
+# Config
+#
+
+set config  {
+	<config verbose="yes">
+		<parent-provides>
+			<service name="ROM"/>
+			<service name="PD"/>
+			<service name="CPU"/>
+			<service name="LOG"/>
+			<service name="IO_MEM"/>
+			<service name="IRQ"/>
+		</parent-provides>
+		<default-route>
+			<any-service> <parent/> <any-child/> </any-service>
+		</default-route>
+		<default caps="200"/>
+
+		<start name="timer">
+			<resource name="RAM" quantum="1M"/>
+			<provides><service name="Timer"/></provides>
+		</start>
+
+		<start name="platform_drv" caps="100">
+			<resource name="RAM" quantum="1M"/>
+			<provides> <service name="Platform"/> </provides>
+			<route>
+				<service name="ROM" label="config"> <child name="rom_filter"/> </service>
+				<any-service> <parent/> </any-service>
+			</route>
+		</start>
+
+		<start name="fpga_drv">
+			<resource name="RAM" quantum="8M"/>
+			<config bitstream="/bitstreams/fpga.bit" enable="yes">
+				<vfs>
+					<dir name="bitstreams">
+						<rom name="fpga.bit"/>
+					</dir>
+				</vfs>
+			</config>
+		</start>
+
+		<start name="report_rom">
+			<resource name="RAM" quantum="2M"/>
+			<provides>
+				<service name="Report"/>
+				<service name="ROM"/>
+			</provides>
+			<config verbose="yes">
+				<policy label="rom_filter -> fpga_state"   report="fpga_drv -> state"/>
+			</config>
+		</start>
+
+		<start name="rom_filter">
+			<resource name="RAM" quantum="2M"/>
+			<provides>
+				<service name="ROM"/>
+			</provides>
+			<config>
+				<input name="loaded" rom="fpga_state" node="state">
+					<node type="bitstream">
+						<attribute name="loaded"/>
+					</node>
+				</input>
+
+				<output node="config">
+<inline>
+	<device name="devcfg" type="xlnx,zynq-devcfg-1.0">
+		<io_mem address="0xf8007000" size="0x1000"/>;
+	</device>
+	<device name="spi0" type="zynq-spi">
+		<io_mem address="0xe0006000" size="0x1000"/>
+		<property name="input-clock" value="166666665"/>
+		<property name="spi-max-frequency" value="0x989680"/>
+		<property name="spi-cpha" value="yes"/>
+	</device>
+	<device name="zynq-gpio" type="zynq-gpio">
+		<io_mem address="0xe000a000" size="0x1000"/>;
+	</device>
+	<policy label="fpga_drv -> " info="yes">
+		<device name="devcfg"/>
+	</policy>
+</inline>
+					<if>
+						<has_value input="loaded" value="yes"/>
+						<then>
+<inline>
+	<device name="regif" type="regif">
+		<io_mem address="0x43c20000" size="0x1000"/>;
+	</device>
+	<device name="axi-dmac-rx" type="rx_dmac">
+		<io_mem address="0x7c400000" size="0x10000"/>;
+		<irq number="89"/>
+	</device>
+	<device name="axi-dmac-tx" type="tx_dmac">
+		<io_mem address="0x7c420000" size="0x10000"/>;
+		<irq number="88"/>
+	</device>
+	<device name="axi-adc-rx" type="cf-ad9361-lpc">
+		<io_mem address="0x79020000" size="0x4000"/>;
+	</device>
+	<device name="axi-dac-tx" type="cf-ad9361-dds-core-lpc">
+		<io_mem address="0x79024000" size="0x4000"/>;
+	</device>
+</inline>
+							<!-- TODO add policy -->
+						</then>
+					</if>
+				</output>
+			</config>
+			<route>
+				<service name="ROM" label="fpga_state">
+					<child name="report_rom"/>
+				</service>
+				<any-service> <parent/> <any-child/> </any-service>
+			</route>
+		</start>
+
+		<start name="rom_logger">
+			<resource name="RAM" quantum="1M"/>
+			<config rom="devices"/>
+			<route>
+				<service name="ROM" label="devices">
+					<child name="rom_filter"/>
+				</service>
+				<any-service> <parent/> <any-child/> </any-service>
+			</route>
+		</start>
+	</config>
+}
+
+install_config $config
+
+
+#
+# Boot modules
+#
+
+# generic modules
+set boot_modules {
+	core vfs.lib.so
+	init timer platform_drv
+	rom_logger
+	fpga_drv fpga.bit
+}
+build_boot_image $boot_modules
+
+append qemu_args " -nographic "
+run_genode_until forever
+
