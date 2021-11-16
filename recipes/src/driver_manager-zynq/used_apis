@@ -1,0 +1,6 @@
+base
+os
+platform_session
+report_session
+nic_session
+uplink_session
