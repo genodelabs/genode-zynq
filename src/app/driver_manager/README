@@ -1,0 +1,25 @@
+The purpose of the driver manager is to launch certain device drivers once the
+corresponding devices become available. On the Zynq platform, this may occur
+as a consequence of loading a custom bitstream into the FPGA. For this purpose,
+the device manager opens a ROM session with label 'devices' by which it is
+provided with the list of devices in the form a platform-driver-compatible
+config ROM. Furthermore, it generates a report containing an init config that
+can be routed to an arbitrary sub-init.
+
+The decision what drivers to start is provided by the config ROM so that the
+driver manager can be used with arbitrary bitstreams and driver components.
+The config may contain an arbitrary number of '<driver>' nodes with the
+mandatory attributes 'name' and 'device'. The 'device' attribute determines the
+type of the device to look for whereas the 'name' attribute specifies the name
+of the component to be started once the device became available.
+In other words, the device driver will add a '<start>' node in the generated
+report with the provided name and the content of the '<driver>' node.
+
+An examplary configuration of the component is shown below:
+
+! <config>
+!   <driver name="nic_drv" device="zynq_gem0">
+!     <binary name="zynq_nic_drv"/>
+!     [...]
+!   </driver>
+! </config>
