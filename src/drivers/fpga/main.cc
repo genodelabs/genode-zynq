@@ -22,6 +22,7 @@
 #include <vfs/simple_env.h>
 
 #include "pcap.h"
+#include "bitstream.h"
 
 namespace Fpga {
 	using namespace Genode;
@@ -90,19 +91,22 @@ struct Fpga::Main
 void Fpga::Main::load_bitstream(Directory::Path const &path)
 {
 	Directory         root_dir  { vfs_env };
-	size_t            file_size { (size_t)root_dir.file_size(path) };
 
 	/* get file name from path using Genode::Path */
 	Genode::Path<256> pathname  { path };
 	pathname.keep_only_last_element();
 	Pcap_loader::Name file_name { &pathname.string()[1] };
 
-	log("Loading bitstream ", path);
+	try {
+		Bitstream         bitstream { root_dir, path };
 
-	loader.load_bitstream(file_size, file_name, [&] (char * buf) {
-		Readonly_file file { root_dir, path };
-		return (size_t)file.read(buf, file_size);
-	});
+		log("Loading bitstream ", path, " of size ", Hex(bitstream.bitstream_size()));
+
+		loader.load_bitstream(bitstream.bitstream_size(), file_name, [&] (char * buf) {
+			return bitstream.read_bitstream(buf);
+		});
+
+	} catch (...) { error("failed to load bitstream"); }
 }
 
 void Fpga::Main::handle_config()
