@@ -31,6 +31,7 @@ namespace Zynq_usrp_e31x {
 		CPU_6X4X_CLOCK = 6*CPU_1X_CLOCK,
 
 		UART_CLOCK = 100*1000*1000,
+		UART_BASE  = UART_0_MMIO_BASE,
 
 		RAM_0_SIZE = 0x40000000, /* 1GiB */
 

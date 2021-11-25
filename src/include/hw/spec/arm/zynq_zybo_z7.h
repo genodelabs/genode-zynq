@@ -31,6 +31,7 @@ namespace Zynq_zybo_z7 {
 		CPU_6X4X_CLOCK = 6*CPU_1X_CLOCK,
 
 		UART_CLOCK = 100*1000*1000,
+		UART_BASE  = UART_1_MMIO_BASE,
 
 		RAM_0_SIZE = 0x40000000, /* 1GiB */
 

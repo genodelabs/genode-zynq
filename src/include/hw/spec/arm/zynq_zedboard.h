@@ -27,6 +27,7 @@ namespace Zynq_zedboard {
 		CPU_3X2X_CLOCK = 3*CPU_1X_CLOCK,
 
 		UART_CLOCK = 50*1000*1000,
+		UART_BASE  = UART_1_MMIO_BASE,
 
 		RAM_0_SIZE = 0x20000000, /* 512MB */
 
