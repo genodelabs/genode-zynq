@@ -73,17 +73,19 @@ $(SD_CARD_IMAGE_FILE) : $(UBOOT_IMG_FILE)
 PART_OFFSET_MB    := 1
 PART_SIZE_MB      := 33
 IMG_SIZE_MB       := $(shell echo "$(PART_SIZE_MB)+$(PART_OFFSET_MB)" | bc -l)
-PART_START_BYTES  := $(shell echo "$(PART_OFFSET_MB)*1024*1024" | bc -l )
-PART_START_SECTOR := $(shell echo "$(PART_OFFSET_MB)*2048" | bc -l )
 PART_SIZE_BLOCK   := $(shell echo "$(PART_SIZE_MB)*1024" | bc -l )
-PART_END_BLOCK    := $(shell echo "$(PART_START_BLOCK) + $(PART_SIZE_BLOCK)" | bc -l )
 
+# mkfs.fat introduced the --offset argument with version 4.2, yet this version
+# is not shipped before Ubuntu 21.04. Until the major distributions are deploying
+# this version, we use a workaround with dd instead.
 $(SD_CARD_IMAGE_FILE):
 	$(MSG_CONVERT)SD-card image $(PRG_REL_DIR)/$@
-	$(VERBOSE) dd if=/dev/zero of=$@.incomplete bs=1M count=$(IMG_SIZE_MB) 2> /dev/null
+	$(VERBOSE) dd if=/dev/zero of=$@.incomplete bs=1M count=$(PART_OFFSET_MB) 2> /dev/null
+	$(VERBOSE) dd if=/dev/zero of=$@.incomplete.fatfs bs=1M count=$(PART_SIZE_MB) 2> /dev/null
 	$(VERBOSE) mkfs.fat -F32 -S512 -n 'U-BOOT' \
-	                     --offset=$(PART_START_SECTOR) \
-	                     $@.incomplete $(PART_SIZE_BLOCK)
+	                     $@.incomplete.fatfs $(PART_SIZE_BLOCK)
+	$(VERBOSE) dd if=$@.incomplete.fatfs of=$@.incomplete bs=1M seek=$(PART_OFFSET_MB)
+	$(VERBOSE) rm $@.incomplete.fatfs
 	$(VERBOSE) mcopy -i $@.incomplete@@$(PART_OFFSET_MB)M $(UBOOT_SPL_FILE) $(UBOOT_IMG_FILE) ::
 
 	$(VERBOSE) echo -e "n\np\n1\n2048\n\nn\nw" | fdisk -b512 $@.incomplete 2> /dev/null > /dev/null
