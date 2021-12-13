@@ -406,7 +406,8 @@ class Cadence_gem::Device
 		{
 			_phy_setup_op(phyaddr, regnum, 0, Phy_maintenance::Operation::READ);
 
-			data = read<Phy_maintenance::Data>();
+			/* the 'Data' field has 16 bits */
+			data = (uint16_t)read<Phy_maintenance::Data>();
 		}
 
 	public:
@@ -439,8 +440,9 @@ class Cadence_gem::Device
 			Packed_uint32 * const low_addr_pointer  = reinterpret_cast<Packed_uint32 *>(&mac.addr[0]);
 			Packed_uint16 * const high_addr_pointer = reinterpret_cast<Packed_uint16 *>(&mac.addr[4]);
 
-			low_addr_pointer->value = read<Mac_addr_1::Low_addr>();
-			high_addr_pointer->value = read<Mac_addr_1::High_addr>();
+			/* the 'Low_addr' field is 32 bit, the 'High_addr' is 16 bit wide */
+			low_addr_pointer->value  = (uint32_t)read<Mac_addr_1::Low_addr>();
+			high_addr_pointer->value = (uint16_t)read<Mac_addr_1::High_addr>();
 
 			return mac;
 		}
