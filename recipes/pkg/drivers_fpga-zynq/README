@@ -1,0 +1,9 @@
+
+               Device drivers needed for scenarios
+                 using the FPGA of the Zynq SoC
+                     with a custom bitstream
+
+The package requires two ROM sessions: A bitstream 'fpga.bit', and a config
+'fpga_devices.config' specifying the additional devices and policies passed to
+the platform driver once the bitstream has been loaded.
+In return, the package provides a Platform session.
