@@ -161,10 +161,14 @@ class Cadence_gem::Tx_buffer_descriptor : public Buffer_descriptor
 			addr_t const packet_phys = _phys_base + p.offset();
 			addr_t const packet_virt = _virt_base + p.offset();
 
-			if (packet_phys & 0x1f) {
-				warning("Packet is not aligned properly.");
-			}
-
+			/**
+			 * According to ug585, an alignment to cache line boundaries is beneficial
+			 * for performance but not mandatory. The packets from the packet allocator
+			 * actually offsets the packet address by 2-bytes. Since the allocated
+			 * buffer is actually cache-line aligned and the first two bytes of
+			 * the allocated buffer remain unused, I assume there is no
+			 * performance penalty.
+			 */
 			cache_clean_invalidate_data(packet_virt, p.size());
 
 			/* wait until the used bit is set (timeout after 10ms) */
