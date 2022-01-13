@@ -33,6 +33,9 @@ namespace Fpga {
 
 class Fpga::Bitstream : public Readonly_file
 {
+	public:
+		struct Format_error : Genode::Exception { };
+
 	private:
 		struct Header_length_error : Exception { };
 		struct Header_error        : Exception { };
@@ -71,7 +74,7 @@ class Fpga::Bitstream : public Readonly_file
 			{
 				case INVALID:
 					error("Invalid bitstream file");
-					throw;
+					throw Format_error();
 				case RAW:
 					_bitstream_size = _file_size;
 					break;
