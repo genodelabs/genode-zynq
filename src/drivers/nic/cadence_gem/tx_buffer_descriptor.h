@@ -36,6 +36,8 @@ class Cadence_gem::Tx_buffer_descriptor : public Buffer_descriptor
 	private:
 		enum { BUFFER_COUNT = 1024 };
 
+		static const size_t BUFFER_SIZE = Nic::Packet_allocator::OFFSET_PACKET_SIZE;
+
 		struct Addr : Register<0x00, 32> {};
 		struct Status : Register<0x04, 32> {
 			struct Length  : Bitfield<0, 14> {};

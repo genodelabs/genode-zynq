@@ -30,7 +30,6 @@ class Cadence_gem::Buffer_descriptor : protected Attached_ram_dataspace, protect
 {
 	public:
 		static const size_t BUFFER_DESC_SIZE = 0x08;
-		static const size_t BUFFER_SIZE      = 1600;
 
 	private:
 		size_t _buffer_count;
