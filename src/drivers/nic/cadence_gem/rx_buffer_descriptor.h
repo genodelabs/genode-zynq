@@ -30,6 +30,8 @@ class Cadence_gem::Rx_buffer_descriptor : public Buffer_descriptor
 {
 	private:
 
+		static const size_t BUFFER_SIZE = Nic::Packet_allocator::OFFSET_PACKET_SIZE;
+
 		struct Addr : Register<0x00, 32> {
 			struct Addr31to2 : Bitfield<2, 30> {};
 			struct Wrap : Bitfield<1, 1> {};
