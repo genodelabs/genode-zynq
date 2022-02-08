@@ -40,6 +40,9 @@ namespace Cadence_gem
 
 	template <typename PACKET_STREAM>
 	class Zerocopy_dma_pool;
+
+	template <typename PACKET_STREAM>
+	class Buffered_dma_pool;
 }
 
 
@@ -94,6 +97,45 @@ class Cadence_gem::Zerocopy_dma_pool : public Dma_pool_base
 
 		Zerocopy_dma_pool(Platform::Connection &, PACKET_STREAM &ps)
 		: Dma_pool_base(Dataspace_client(ps.dataspace()).phys_addr(), ps.ds_size()),
+		  _packet_stream(ps)
+		{
+			if (!_dma_base_addr)
+				error(__PRETTY_FUNCTION__, ": Could not get DMA address of dataspace");
+		}
+};
+
+
+template <typename PACKET_STREAM>
+class Cadence_gem::Buffered_dma_pool : private Platform::Dma_buffer,
+                                       public  Dma_pool_base
+{
+	private:
+		PACKET_STREAM &_packet_stream;
+
+		void* _local_packet_addr(Packet_descriptor const &p) {
+			return reinterpret_cast<void*>(Dma_buffer::local_addr<uint8_t>() + p.offset()); }
+
+	public:
+		using Dma_pool_base::dma_addr;
+
+		Packet_descriptor packet_descriptor_with_content(addr_t dma_addr, size_t len)
+		{
+			/* copy content from DMA memory to packet descriptor */
+			Packet_descriptor p = packet_descriptor(dma_addr, len);
+			memcpy(_packet_stream.packet_content(p), _local_packet_addr(p), p.size());
+			return p;
+		}
+
+		addr_t dma_addr_with_content(Packet_descriptor const &p)
+		{
+			/* copy content from packet descriptor to DMA memory */
+			memcpy(_local_packet_addr(p), _packet_stream.packet_content(p), p.size());
+			return Dma_pool_base::dma_addr(p);
+		}
+
+		Buffered_dma_pool(Platform::Connection &platform, PACKET_STREAM &ps)
+		: Dma_buffer(platform, ps.ds_size(), UNCACHED),
+		  Dma_pool_base(Dma_buffer::dma_addr(), ps.ds_size()),
 		  _packet_stream(ps)
 		{
 			if (!_dma_base_addr)

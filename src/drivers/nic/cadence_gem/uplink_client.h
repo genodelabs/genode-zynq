@@ -26,8 +26,8 @@ namespace Cadence_gem {
 
 	using Source    = Uplink::Session::Tx::Source;
 	using Sink      = Uplink::Session::Rx::Sink;
-	using Rx_buffer = Rx_buffer_descriptor<Source, Zerocopy_dma_pool<Source>>;
-	using Tx_buffer = Tx_buffer_descriptor<Sink,   Zerocopy_dma_pool<Sink>>;
+	using Rx_buffer = Rx_buffer_descriptor<Source, Buffered_dma_pool<Source>>;
+	using Tx_buffer = Tx_buffer_descriptor<Sink,   Buffered_dma_pool<Sink>>;
 
 	class Uplink_client;
 }
