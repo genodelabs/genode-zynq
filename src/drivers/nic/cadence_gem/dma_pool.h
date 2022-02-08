@@ -29,7 +29,6 @@
 /* Genode includes */
 #include <platform_session/connection.h>
 #include <os/packet_stream.h>
-#include <cpu/cache.h>
 
 namespace Cadence_gem
 {
@@ -37,9 +36,6 @@ namespace Cadence_gem
 	using Packet_descriptor = Genode::Packet_descriptor;
 
 	class Dma_pool_base;
-
-	template <typename PACKET_STREAM>
-	class Zerocopy_dma_pool;
 
 	template <typename PACKET_STREAM>
 	class Buffered_dma_pool;
@@ -76,32 +72,6 @@ class Cadence_gem::Dma_pool_base
 		/* return packet descriptor containing content from given dma address */
 		Packet_descriptor packet_descriptor_with_content(addr_t dma_addr, size_t len);
 
-};
-
-
-template <typename PACKET_STREAM>
-class Cadence_gem::Zerocopy_dma_pool : public Dma_pool_base
-{
-	private:
-		PACKET_STREAM &_packet_stream;
-
-	public:
-		Packet_descriptor packet_descriptor_with_content(addr_t dma_addr, size_t len) {
-			return packet_descriptor(dma_addr, len); }
-
-		addr_t dma_addr_with_content(Packet_descriptor const &p)
-		{
-			cache_clean_invalidate_data(_packet_stream.ds_local_base() + p.offset(), p.size());
-			return dma_addr(p);
-		}
-
-		Zerocopy_dma_pool(Platform::Connection &, PACKET_STREAM &ps)
-		: Dma_pool_base(Dataspace_client(ps.dataspace()).phys_addr(), ps.ds_size()),
-		  _packet_stream(ps)
-		{
-			if (!_dma_base_addr)
-				error(__PRETTY_FUNCTION__, ": Could not get DMA address of dataspace");
-		}
 };
 
 
