@@ -16,27 +16,24 @@
 #define _INCLUDE__DRIVERS__NIC__CADENCE_GEM__TX_BUFFER_DESCRIPTOR_H_
 
 #include <base/log.h>
-#include <cpu/cache.h>
-#include <timer_session/connection.h>
 #include <nic_session/nic_session.h>
+#include <pd_session/connection.h>
 
 #include "buffer_descriptor.h"
 
 namespace Cadence_gem {
 	using namespace Genode;
 
-	template <typename SINK>
+	template <typename SINK, typename DMA_POOL>
 	class Tx_buffer_descriptor;
 }
 
 
-template <typename SINK>
+template <typename SINK, typename DMA_POOL>
 class Cadence_gem::Tx_buffer_descriptor : public Buffer_descriptor
 {
 	private:
 		enum { BUFFER_COUNT = 1024 };
-
-		static const size_t BUFFER_SIZE = Nic::Packet_allocator::OFFSET_PACKET_SIZE;
 
 		struct Addr : Register<0x00, 32> {};
 		struct Status : Register<0x04, 32> {
@@ -53,10 +50,7 @@ class Cadence_gem::Tx_buffer_descriptor : public Buffer_descriptor
 		};
 
 		SINK              &_sink;
-		Timer::Connection &_timer;
-
-		addr_t const _phys_base;
-		addr_t const _virt_base;
+		DMA_POOL           _dma_pool;
 
 		void _reset_descriptor(unsigned const i, addr_t phys_addr) {
 			if (i > _max_index())
@@ -75,17 +69,16 @@ class Cadence_gem::Tx_buffer_descriptor : public Buffer_descriptor
 		}
 
 	public:
+		static const size_t PACKET_SIZE = Nic::Packet_allocator::OFFSET_PACKET_SIZE;
 
-		class Package_send_timeout : public Genode::Exception {};
+		class Buffer_descriptor_queue_full : public Genode::Exception {};
 
-		Tx_buffer_descriptor(Genode::Env &env,
-		                     SINK &sink,
-		                     Timer::Connection &timer)
-		: Buffer_descriptor(env, BUFFER_COUNT),
+		Tx_buffer_descriptor(Genode::Env &,
+		                     Platform::Connection &platform,
+		                     SINK &sink)
+		: Buffer_descriptor(platform, BUFFER_COUNT),
 		  _sink(sink),
-		  _timer(timer),
-		  _phys_base(Dataspace_client(sink.dataspace()).phys_addr()),
-		  _virt_base(env.rm().attach(sink.dataspace()))
+		  _dma_pool(platform, sink)
 		{
 			for (size_t i=0; i <= _max_index(); i++) {
 				/* configure all descriptors with address 0, which we
@@ -118,7 +111,7 @@ class Cadence_gem::Tx_buffer_descriptor : public Buffer_descriptor
 					/* build packet descriptor from buffer descriptor
 					 * and acknowledge packet */
 					const size_t length = Status::Length::get(_tail().status);
-					Nic::Packet_descriptor p((addr_t)_tail().addr - _phys_base, length);
+					Nic::Packet_descriptor p = _dma_pool.packet_descriptor((addr_t)_tail().addr, length);
 					if (_sink.packet_valid(p))
 						_sink.acknowledge_packet(p);
 					else
@@ -151,42 +144,27 @@ class Cadence_gem::Tx_buffer_descriptor : public Buffer_descriptor
 			}
 		}
 
+		bool ready_to_submit()
+		{
+			/* if used bit of head is set, there is an available buffer descriptor */
+			return Status::Used::get(_head().status);
+		}
+
 		void add_to_queue(Nic::Packet_descriptor p)
 		{
 			/* the head marks the descriptor that we use next for
 			 * handing over the packet to hardware */
-			if (p.size() > BUFFER_SIZE) {
+			if (p.size() > PACKET_SIZE) {
 				warning("Ethernet package to big. Not sent!");
 				return;
 			}
 
-			addr_t const packet_phys = _phys_base + p.offset();
-			addr_t const packet_virt = _virt_base + p.offset();
+			/* sanity check */
+			if (!ready_to_submit())
+				throw Buffer_descriptor_queue_full();
 
-			/**
-			 * According to ug585, an alignment to cache line boundaries is beneficial
-			 * for performance but not mandatory. The packets from the packet allocator
-			 * actually offsets the packet address by 2-bytes. Since the allocated
-			 * buffer is actually cache-line aligned and the first two bytes of
-			 * the allocated buffer remain unused, I assume there is no
-			 * performance penalty.
-			 */
-			cache_clean_invalidate_data(packet_virt, p.size());
-
-			/* wait until the used bit is set (timeout after 10ms) */
-			uint32_t timeout = 10000;
-			while ( !Status::Used::get(_head().status) ) {
-				if (timeout == 0) {
-					throw Package_send_timeout();
-				}
-				timeout -= 1000;
-
-				/*  TODO buffer is full, instead of sleeping we should
-				 *       therefore wait for tx_complete interrupt */
-				_timer.usleep(1000);
-			}
-
-			_reset_descriptor(_head_index(), packet_phys);
+			addr_t dma_addr = _dma_pool.dma_addr_with_content(p);
+			_reset_descriptor(_head_index(), dma_addr);
 			_head().status |=  Status::Length::bits(p.size());
 
 			/* unset the used bit */

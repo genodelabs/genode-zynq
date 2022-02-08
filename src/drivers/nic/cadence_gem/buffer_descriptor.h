@@ -16,7 +16,8 @@
 #define _INCLUDE__DRIVERS__NIC__CADENCE_GEM__BUFFER_DESCRIPTOR_H_
 
 /* Genode includes */
-#include <base/attached_ram_dataspace.h>
+#include <platform_session/connection.h>
+#include <platform_session/dma_buffer.h>
 #include <util/mmio.h>
 
 namespace Cadence_gem {
@@ -26,7 +27,7 @@ namespace Cadence_gem {
 }
 
 
-class Cadence_gem::Buffer_descriptor : protected Attached_ram_dataspace, protected Mmio
+class Cadence_gem::Buffer_descriptor : protected Platform::Dma_buffer, protected Mmio
 {
 	public:
 		static const size_t BUFFER_DESC_SIZE = 0x08;
@@ -100,19 +101,18 @@ class Cadence_gem::Buffer_descriptor : protected Attached_ram_dataspace, protect
 
 
 	public:
+		using Platform::Dma_buffer::dma_addr;
+
 		/*
-		 * start of the ram spave contains all buffer descriptors
-		 * after that the data spaces for the ethernet packages are following
+		 * start of the ram space contains all buffer descriptors
 		 */
-		Buffer_descriptor(Genode::Env &env, const size_t buffer_count = 1)
+		Buffer_descriptor(Platform::Connection &platform, const size_t buffer_count = 1)
 		:
-			Attached_ram_dataspace(env.ram(), env.rm(), BUFFER_DESC_SIZE * buffer_count, UNCACHED),
+			Platform::Dma_buffer(platform, BUFFER_DESC_SIZE * buffer_count, UNCACHED),
 			Genode::Mmio( reinterpret_cast<addr_t>(local_addr<void>()) ),
 			_buffer_count(buffer_count),
 			_descriptors(local_addr<descriptor_t>())
 		{ }
-
-		addr_t phys_addr() { return Dataspace_client(cap()).phys_addr(); }
 };
 
 #endif /* _INCLUDE__DRIVERS__NIC__CADENCE_GEM__BUFFER_DESCRIPTOR_H_ */

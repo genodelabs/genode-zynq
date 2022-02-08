@@ -450,10 +450,12 @@ class Cadence_gem::Device
 		template <typename RX,
 		          typename TX,
 		          typename RECEIVE_PKT,
-		          typename HANDLE_ACKS>
+		          typename HANDLE_ACKS,
+		          typename TRANSMIT_PKT>
 		void handle_irq(RX &rx, TX &tx,
 		                RECEIVE_PKT  && receive_pkt,
-		                HANDLE_ACKS  && handle_acks)
+		                HANDLE_ACKS  && handle_acks,
+		                TRANSMIT_PKT && transmit_pkt)
 		{
 			/* 16.3.9 Receiving Frames */
 			/* read interrupt status, to detect the interrupt reason */
@@ -480,8 +482,9 @@ class Cadence_gem::Device
 				/* reset interrupt status */
 				write<Tx_status>(Tx_status::Tx_complete::bits(1));
 				write<Interrupt_status>(Interrupt_status::Tx_complete::bits(1));
-
-				/* TODO if there is a pending packet, continue sending */
+				
+				/* continue sending */
+				transmit_pkt();
 			}
 
 			/* handle Rx/Tx errors */
@@ -692,9 +695,6 @@ class Cadence_gem::Device
 			write<Mac_addr_1::Low_addr>(low_addr_pointer->value);
 			write<Mac_addr_1::High_addr>(high_addr_pointer->value);
 		}
-
-		/* TODO remove */
-		Timer::Connection &timer() { return _timer; }
 };
 
 #endif /* _INCLUDE__DRIVERS__NIC__CADENCE_GEM__CADENCE_GEM_H_ */

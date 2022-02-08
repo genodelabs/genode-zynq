@@ -20,11 +20,14 @@
 #include "tx_buffer_descriptor.h"
 #include "rx_buffer_descriptor.h"
 #include "device.h"
+#include "dma_pool.h"
 
 namespace Cadence_gem {
 
-	typedef Rx_buffer_descriptor<Uplink::Session::Tx::Source> Rx_buffer;
-	typedef Tx_buffer_descriptor<Uplink::Session::Rx::Sink>   Tx_buffer;
+	using Source    = Uplink::Session::Tx::Source;
+	using Sink      = Uplink::Session::Rx::Sink;
+	using Rx_buffer = Rx_buffer_descriptor<Source, Zerocopy_dma_pool<Source>>;
+	using Tx_buffer = Tx_buffer_descriptor<Sink,   Zerocopy_dma_pool<Sink>>;
 
 	class Uplink_client;
 }
@@ -51,19 +54,18 @@ class Cadence_gem::Uplink_client : public Uplink_client_base
 			if (!_conn->rx()->packet_avail())
 				return false;
 
+			if (!_tx_buffer->ready_to_submit())
+				return false;
+
 			Packet_descriptor packet = _conn->rx()->get_packet();
 			if (!packet.size()) {
 				Genode::warning("Invalid tx packet");
 				return true;
 			}
 
-			try {
-				_tx_buffer->add_to_queue(packet);
-				_device.transmit_start();
-			} catch (Tx_buffer::Package_send_timeout) {
-				Genode::warning("Package Tx timeout");
-				return false;
-			}
+			_tx_buffer->add_to_queue(packet);
+
+			_device.transmit_start();
 
 			return true;
 		}
@@ -73,7 +75,6 @@ class Cadence_gem::Uplink_client : public Uplink_client_base
 			while (_conn->tx()->ack_avail()) {
 				Packet_descriptor pd = _conn->tx()->get_acked_packet();
 				_rx_buffer->reset_descriptor(pd);
-				_conn->tx()->release_packet(pd);
 			}
 		}
 
@@ -86,20 +87,19 @@ class Cadence_gem::Uplink_client : public Uplink_client_base
 			}
 			_device.handle_irq(*_rx_buffer, *_tx_buffer,
 				[&] (Nic::Packet_descriptor pkt)
-			{
-				if (_conn->tx()->packet_valid(pkt)) {
-					/* submit packet */
-					_conn->tx()->submit_packet(pkt);
-				}
-				else
-					error(
-						"invalid packet descriptor ", Hex(pkt.offset()),
-						" size ", Hex(pkt.size()));
-			},
-				[&] ()
-			{
-				_handle_acks();
-			});
+				{
+					if (_conn->tx()->packet_valid(pkt)) {
+						/* submit packet */
+						_conn->tx()->submit_packet(pkt);
+					}
+					else
+						error(
+							"invalid packet descriptor ", Hex(pkt.offset()),
+							" size ", Hex(pkt.size()));
+					},
+				[&] () { _handle_acks(); },
+				[&] () { while(_send()); }
+			);
 
 			_device.irq_ack();
 		}
@@ -144,6 +144,7 @@ class Cadence_gem::Uplink_client : public Uplink_client_base
 		Uplink_client(Env                    &env,
 		              Allocator              &alloc,
 		              Device                 &device,
+		              Platform::Connection   &platform,
 		              Net::Mac_address const  mac_addr)
 		:
 			Uplink_client_base { env, alloc, mac_addr },
@@ -152,8 +153,8 @@ class Cadence_gem::Uplink_client : public Uplink_client_base
 		{
 			_drv_handle_link_state(true);
 
-			_tx_buffer.construct(env, *_conn->rx(), _device.timer());
-			_rx_buffer.construct(env, *_conn->tx());
+			_tx_buffer.construct(env, platform, *_conn->rx());
+			_rx_buffer.construct(env, platform, *_conn->tx());
 
 			_device.irq_sigh(_irq_handler);
 			_device.irq_ack();
@@ -161,7 +162,7 @@ class Cadence_gem::Uplink_client : public Uplink_client_base
 			/* set mac address */
 			_device.write_mac_address(mac_addr);
 
-			_device.enable(_rx_buffer->phys_addr(), _tx_buffer->phys_addr());
+			_device.enable(_rx_buffer->dma_addr(), _tx_buffer->dma_addr());
 		}
 };
 

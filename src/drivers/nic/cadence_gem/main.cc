@@ -52,7 +52,7 @@ struct Server::Main
 			mac_addr = nic_config.attribute_value("mac", mac_addr);
 		} catch (...) { }
 
-		_uplink_client.construct(_env, _heap, _device, mac_addr);
+		_uplink_client.construct(_env, _heap, _device, _platform, mac_addr);
 	}
 };
 
