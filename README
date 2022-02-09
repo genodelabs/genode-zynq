@@ -13,7 +13,7 @@ To use it, you first need to obtain a clone of Genode:
 
 Now, clone the _genode-zynq.git_ repository to _genode/repos/zynq:
 
-! git clone https://github.com/jschlatow/genode-zynq.git genode/repos/zynq
+! git clone https://github.com/genodelabs/genode-zynq.git genode/repos/zynq
 
 Create a build directory by executing the following command in the genode
 directory:
