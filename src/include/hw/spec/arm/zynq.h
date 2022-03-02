@@ -66,6 +66,12 @@ struct Zynq::L2_cache : Hw::Pl310
 		Aux::Early_bresp::set(aux, true);
 		write<Aux>(aux);
 
+		Prefetch_ctrl::access_t prefetch = 0;
+		Prefetch_ctrl::Data_prefetch::set(prefetch, 1);
+		Prefetch_ctrl::Inst_prefetch::set(prefetch, 1);
+		Prefetch_ctrl::Double_linefill::set(prefetch, true);
+		write<Prefetch_ctrl>(prefetch | 7);
+
 		write<Tag_ram>(Tag_ram::Setup_latency::bits(1)
 		             | Tag_ram::Write_latency::bits(1)
 		             | Tag_ram::Read_latency::bits(1));
