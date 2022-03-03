@@ -1,4 +1,4 @@
-#
+
 # Linux kernel configuration (essentials)
 #
 # bare minimum to boot the hardware into a shell
@@ -9,6 +9,13 @@ LX_ENABLE += TTY SERIAL_CORE SERIAL_CORE_CONSOLE PRINTK HAS_IOMEM
 
 # target fundamentals
 LX_ENABLE += MMU CPU_V7 ARCH_ZYNQ SERIAL_XILINX_PS_UART SERIAL_XILINX_PS_UART_CONSOLE SERIAL_EARLYCON
+
+# chose the RCU implementation targeted by lx_emul (tree RCU requires SMP)
+LX_ENABLE += TREE_RCU TREE_SRCU SMP
+
+# required to set UNINLINE_SPIN_UNLOCK (needed by lx_emul)
+LX_ENABLE += PREEMPT
+
 
 # ARM errata
 LX_ENABLE += PL310_ERRATA_588369 \
@@ -37,7 +44,6 @@ LX_ENABLE += MARVELL_PHY
 # network protocols
 LX_ENABLE += INET IP_PNP IP_PNP_DHCP PACKET FILTER
 
-
 # not strictly necessary but convenient
 LX_ENABLE += CMDLINE_FROM_BOOTLOADER IKCONFIG IKCONFIG_PROC
 
@@ -59,3 +65,6 @@ LX_DISABLE += IOMMU_SUPPORT
 
 # no thumb kernel and virt extension
 LX_DISABLE += THUMB2_KERNEL ARM_VIRT_EXT
+
+# disable unneeded debugging
+LX_DISABLE += DEBUG_PREEMPT
