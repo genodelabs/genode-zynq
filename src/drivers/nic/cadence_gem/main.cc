@@ -16,9 +16,6 @@
 #include <base/component.h>
 #include <base/heap.h>
 
-/* NIC driver includes */
-#include <drivers/nic/mode.h>
-
 /* local includes */
 #include "uplink_client.h"
 #include "zynq.h"
@@ -33,15 +30,15 @@ namespace Server {
 
 struct Server::Main
 {
-	Env                                              &_env;
-	Heap                                              _heap          { _env.ram(), _env.rm() };
+	Env                       &_env;
+	Heap                       _heap          { _env.ram(), _env.rm() };
+	Platform::Connection       _platform      { _env };
+	Platform::Device           _pfdevice      { _platform };
+	Cadence_gem::Device        _device        { _env, _pfdevice };
+	Cadence_gem::Uplink_client _uplink_client { _env, _heap, _device,
+	                                            _platform, _mac_addr() };
 
-	Platform::Connection                              _platform      { _env };
-	Platform::Device                                  _pfdevice      { _platform };
-	Cadence_gem::Device                               _device        { _env, _pfdevice };
-	Constructible<Cadence_gem::Uplink_client>         _uplink_client { };
-
-	Main(Env &env) : _env(env)
+	Nic::Mac_address _mac_addr()
 	{
 		Attached_rom_dataspace config_rom { _env, "config" };
 
@@ -51,9 +48,10 @@ struct Server::Main
 			Genode::Xml_node nic_config = config_rom.xml();
 			mac_addr = nic_config.attribute_value("mac", mac_addr);
 		} catch (...) { }
-
-		_uplink_client.construct(_env, _heap, _device, _platform, mac_addr);
+		return mac_addr;
 	}
+
+	Main(Env &env) : _env(env) { }
 };
 
 
