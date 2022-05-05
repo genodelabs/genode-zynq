@@ -1,0 +1,114 @@
+#
+# Build
+#
+create_boot_directory
+
+import_from_depot [depot_user]/src/[base_src] \
+                  [depot_user]/src/init \
+                  [depot_user]/src/zynq_platform_drv
+
+# generic components
+set build_components {
+	test/zynq_clocks
+}
+
+build $build_components
+
+
+#
+# Config
+#
+
+set config  {
+	<config verbose="yes">
+		<parent-provides>
+			<service name="ROM"/>
+			<service name="PD"/>
+			<service name="CPU"/>
+			<service name="LOG"/>
+			<service name="IO_MEM"/>
+			<service name="IRQ"/>
+		</parent-provides>
+		<default-route>
+			<any-service> <parent/> <any-child/> </any-service>
+		</default-route>
+		<default caps="200"/>
+
+		<start name="test-zynq_clocks">
+			<resource name="RAM" quantum="2M"/>
+		</start>
+
+		<start name="zynq_platform_drv" caps="100">
+			<resource name="RAM" quantum="1M"/>
+			<provides> <service name="Platform"/> </provides>
+			<route> <any-service> <parent/> </any-service> </route>
+			<config>
+				<device name="dummy">
+					<clock name="ps_clk"     driver_name="ps_clk"/>
+					<clock name="armpll"     driver_name="armpll"/>
+					<clock name="ddrpll"     driver_name="ddrpll"/>
+					<clock name="iopll"      driver_name="iopll"/>
+					<clock name="cpu_6or4x"  driver_name="cpu_6or4x"/>
+					<clock name="cpu_3or2x"  driver_name="cpu_3or2x"/>
+					<clock name="cpu_2x"     driver_name="cpu_2x"/>
+					<clock name="cpu_1x"     driver_name="cpu_1x"/>
+					<clock name="ddr2x"      driver_name="ddr2x"/>
+					<clock name="ddr3x"      driver_name="ddr3x"/>
+					<clock name="lqspi"      driver_name="lqspi"/>
+					<clock name="smc"        driver_name="smc"/>
+					<clock name="gem0"       driver_name="gem0"/>
+					<clock name="gem1"       driver_name="gem1"/>
+					<clock name="can0"       driver_name="can0"/>
+					<clock name="can1"       driver_name="can1"/>
+					<clock name="sdio0"      driver_name="sdio0"/>
+					<clock name="sdio1"      driver_name="sdio1"/>
+					<clock name="uart0"      driver_name="uart0"/>
+					<clock name="uart1"      driver_name="uart1"/>
+					<clock name="spi0"       driver_name="spi0"/>
+					<clock name="spi1"       driver_name="spi1"/>
+					<clock name="dma"        driver_name="dma"/>
+					<clock name="usb0_aper"  driver_name="usb0_aper"/>
+					<clock name="usb1_aper"  driver_name="usb1_aper"/>
+					<clock name="gem0_aper"  driver_name="gem0_aper"/>
+					<clock name="gem1_aper"  driver_name="gem1_aper"/>
+					<clock name="sdio0_aper" driver_name="sdio0_aper"/>
+					<clock name="sdio1_aper" driver_name="sdio1_aper"/>
+					<clock name="spi0_aper"  driver_name="spi0_aper"/>
+					<clock name="spi1_aper"  driver_name="spi1_aper"/>
+					<clock name="can0_aper"  driver_name="can0_aper"/>
+					<clock name="can1_aper"  driver_name="can1_aper"/>
+					<clock name="i2c0_aper"  driver_name="i2c0_aper"/>
+					<clock name="i2c1_aper"  driver_name="i2c1_aper"/>
+					<clock name="uart0_aper" driver_name="uart0_aper"/>
+					<clock name="uart1_aper" driver_name="uart1_aper"/>
+					<clock name="gpio_aper"  driver_name="gpio_aper"/>
+					<clock name="lqspi_aper" driver_name="lqspi_aper"/>
+					<clock name="smc_aper"   driver_name="smc_aper"/>
+					<clock name="swdt"       driver_name="swdt"/>
+				</device>
+
+				<policy label="test-zynq_clocks -> " info="yes">
+					<device name="dummy"/>
+				</policy>
+			</config>
+		</start>
+	</config>
+}
+
+install_config $config
+
+
+#
+# Boot modules
+#
+
+# generic modules
+set boot_modules {
+	test-zynq_clocks
+}
+
+build_boot_image $boot_modules
+
+append qemu_args " -nographic "
+run_genode_until forever
+
