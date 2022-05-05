@@ -1,5 +1,5 @@
 _/src/fpga_drv
-_/src/platform_drv
+_/src/zynq_platform_drv
 _/src/report_rom
 _/src/rom_filter
 _/src/vfs
