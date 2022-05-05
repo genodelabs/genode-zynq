@@ -112,9 +112,6 @@ class Spi::Zynq_driver : protected Platform::Volatile_driver<Spi::Mmio, Platform
 						if (name == "spi-max-frequency")
 							max_freq = prop.attribute_value("value", max_freq);
 
-						if (name == "input-clock")
-							clock_freq = prop.attribute_value("value", clock_freq);
-
 						else if (name == "spi-cpha")
 							cpha = prop.attribute_value("value", cpha);
 
@@ -122,12 +119,16 @@ class Spi::Zynq_driver : protected Platform::Volatile_driver<Spi::Mmio, Platform
 							cpol = prop.attribute_value("value", cpol);
 					});
 
+					node.for_each_sub_node("clock", [&] (Xml_node &clock) {
+						clock_freq = clock.attribute_value("rate", clock_freq);
+					});
+
 					found = true;
 				});
 			});
 
 			if (clock_freq == 0)
-				error("Unable to set spi clock because input-clock <property> is missing.");
+				error("Unable to set spi clock because <clock> is missing.");
 			if (max_freq == 0)
 				error("Unable to set spi clock because spi-max-frequency <property> is missing.");
 
