@@ -42,7 +42,7 @@ set config  {
 			<resource name="RAM" quantum="1M"/>
 			<provides> <service name="Platform"/> </provides>
 			<route> <any-service> <parent/> </any-service> </route>
-			<config>
+			<config devices_rom="config">
 				<device name="dummy">
 					<clock name="ps_clk"     driver_name="ps_clk"/>
 					<clock name="armpll"     driver_name="armpll"/>
