@@ -16,7 +16,6 @@
 
 #include <platform_session/connection.h>
 #include <platform_session/device.h>
-#include <platform_session/volatile_device.h>
 
 namespace Spi {
 	using namespace Genode;
@@ -24,7 +23,6 @@ namespace Spi {
 	class Mmio;
 	class Zynq_driver;
 }
-
 
 struct Spi::Mmio : Platform::Device::Mmio
 {
@@ -70,18 +68,22 @@ struct Spi::Mmio : Platform::Device::Mmio
 	{ }
 };
 
-
-class Spi::Zynq_driver : protected Platform::Volatile_driver<Spi::Mmio, Platform::Device::Type>
+class Spi::Zynq_driver
 {
 	public:
-		typedef Platform::Device::Type                  Type;
-		typedef Platform::Volatile_driver<Mmio,Type>    Volatile_driver;
+		typedef Platform::Device::Type Type;
 
 	private:
 
-		void _init()
+		Platform::Device       _device;
+		Platform::Device::Mmio _mmio;
+
+	public:
+
+		Zynq_driver(Platform::Connection &platform, Type const &type)
+		: _device(platform, type),
+		  _mmio(_device)
 		{
-			Mmio &mmio = _mmio();
 			/**
 			 * By default, the controller preforms chip select and starts transfers
 			 * automatically.
@@ -99,12 +101,12 @@ class Spi::Zynq_driver : protected Platform::Volatile_driver<Spi::Mmio, Platform
 
 			/* read properties from platform session */
 			bool found = false;
-			_platform.with_xml([&] (Xml_node & xml) {
+			platform.with_xml([&] (Xml_node & xml) {
 				xml.for_each_sub_node("device", [&] (Xml_node & node) {
 					if (found)
 						return;
 
-					if (node.attribute_value("type", String()) != _identifier.name)
+					if (node.attribute_value("type", String()) != type.name)
 						return;
 
 					node.for_each_sub_node("property", [&] (Xml_node &prop) {
@@ -133,7 +135,7 @@ class Spi::Zynq_driver : protected Platform::Volatile_driver<Spi::Mmio, Platform
 				error("Unable to set spi clock because spi-max-frequency <property> is missing.");
 
 			/* always set master mode */
-			mmio.write<Mmio::Ctrl::Master>(1);
+			_mmio.write<Mmio::Ctrl::Master>(1);
 
 			/* calculate clock prescaler */
 			unsigned prescaler  = 0;
@@ -156,45 +158,19 @@ class Spi::Zynq_driver : protected Platform::Volatile_driver<Spi::Mmio, Platform
 			if (prescaler < Mmio::Ctrl::Prescaler::MIN || prescaler > Mmio::Ctrl::Prescaler::MAX)
 				prescaler = Mmio::Ctrl::Prescaler::DEFAULT;
 
-			mmio.write<Mmio::Ctrl::Prescaler>(prescaler);
+			_mmio.write<Mmio::Ctrl::Prescaler>(prescaler);
 
 			/* set Cpol and Cpha */
-			mmio.write<Mmio::Ctrl::Cpol>(cpol);
-			mmio.write<Mmio::Ctrl::Cpha>(cpha);
+			_mmio.write<Mmio::Ctrl::Cpol>(cpol);
+			_mmio.write<Mmio::Ctrl::Cpha>(cpha);
 		}
 
-		void _acquire_and_init()
-		{
-			try {
-				acquire();
-				_init();
-			} catch (...) { }
-		}
-
-		Mmio &_mmio()
-		{
-			if (!available())
-				_acquire_and_init();
-
-			return driver();
-		}
-
-	public:
-
-		using Volatile_driver::available;
-
-		Zynq_driver(Platform::Connection &platform, Type const &type)
-		: Volatile_driver(platform, type)
-		{ _acquire_and_init(); }
-
-		unsigned id()        { return _mmio().read<Mmio::Module>(); }
+		unsigned id() { return _mmio.read<Mmio::Module>(); }
 
 		size_t write_and_read(unsigned char *buf, size_t bytes_to_send)
 		{
 			size_t bytes_sent     = 0;
 			size_t bytes_received = 0;
-
-			Mmio  &mmio = _mmio();
 
 			/**
 			 * Since we only transfer small amounts of data, we don't use
@@ -207,26 +183,26 @@ class Spi::Zynq_driver : protected Platform::Volatile_driver<Spi::Mmio, Platform
 			}
 
 			/* enable controller */
-			mmio.write<Mmio::Enable>(1);
+			_mmio.write<Mmio::Enable>(1);
 
 			/* TODO (optional) set chip select */
 
 			/* fill Tx FIFO */
 			while (bytes_sent < bytes_to_send)
-				mmio.write<Mmio::Tx::Data>(buf[bytes_sent++]);
+				_mmio.write<Mmio::Tx::Data>(buf[bytes_sent++]);
 
 			/* start the transfer */
-			mmio.write<Mmio::Ctrl::Transfer>(1);
+			_mmio.write<Mmio::Ctrl::Transfer>(1);
 
 			/* wait until Tx FIFO is empty */
-			while (!mmio.read<Mmio::Status::Tx_not_full>());
+			while (!_mmio.read<Mmio::Status::Tx_not_full>());
 
 			/* read from Rx FIFO */
 			while (bytes_received < bytes_sent)
-				buf[bytes_received++] = (unsigned char)mmio.read<Mmio::Rx::Data>();
+				buf[bytes_received++] = (unsigned char)_mmio.read<Mmio::Rx::Data>();
 
 			/* disable controller */
-			mmio.write<Mmio::Enable>(0);
+			_mmio.write<Mmio::Enable>(0);
 
 			return bytes_received;
 		}
