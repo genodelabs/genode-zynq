@@ -189,6 +189,7 @@ class Cadence_gem::Device
 		*/
 		struct Interrupt_enable : Register<0x28, 32>
 		{
+			struct Tx_complete    : Bitfield<7, 1> {};
 			struct Rx_used_read   : Bitfield<2, 1> {};
 			struct Rx_complete    : Bitfield<1, 1> {};
 			struct Pause_zero     : Bitfield<13,1> {};
@@ -660,7 +661,8 @@ class Cadence_gem::Device
 				                     Interrupt_enable::Rx_overrun::bits(1) |
 				                     Interrupt_enable::Pause_received::bits(1) |
 				                     Interrupt_enable::Pause_zero::bits(1) |
-				                     Interrupt_enable::Rx_used_read::bits(1));
+				                     Interrupt_enable::Rx_used_read::bits(1) |
+				                     Interrupt_enable::Tx_complete::bits(1));
 		}
 
 		void deinit()
