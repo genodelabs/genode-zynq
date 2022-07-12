@@ -31,6 +31,7 @@ SRC_C   += lx_emul/shadow/kernel/irq/spurious.c
 SRC_C   += lx_emul/shadow/kernel/rcu/srcutree.c
 SRC_C   += lx_emul/shadow/kernel/rcu/tree.c
 SRC_C   += lx_emul/shadow/kernel/smp.c
+SRC_C   += lx_emul/shadow/kernel/softirq.c
 SRC_C   += lx_emul/shadow/kernel/locking/spinlock.c
 SRC_C   += lx_emul/shadow/kernel/stop_machine.c
 SRC_C   += lx_emul/shadow/drivers/clk/clk.c
