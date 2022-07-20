@@ -123,22 +123,6 @@ unsigned int _parse_integer_limit(const char * s,unsigned int base,unsigned long
 }
 
 
-#include <linux/spinlock_api_smp.h>
-
-void __lockfunc _raw_spin_lock_bh(raw_spinlock_t * lock)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/spinlock_api_smp.h>
-
-void __lockfunc _raw_spin_unlock_bh(raw_spinlock_t * lock)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/random.h>
 
 void add_bootloader_randomness(const void * buf,unsigned int size)
