@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2022-05-04
+ * \date   2022-07-26
  */
 
 #include <lx_emul.h>
@@ -70,25 +70,9 @@ void __put_task_struct(struct task_struct * tsk)
 }
 
 
-#include <linux/interrupt.h>
-
-void __raise_softirq_irqoff(unsigned int nr)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
 #include <linux/fs.h>
 
 void __remove_inode_hash(struct inode * inode)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/interrupt.h>
-
-void __tasklet_schedule(struct tasklet_struct * t)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -263,14 +247,6 @@ char __initdata boot_command_line[] = {};
 #include <linux/kernel.h>
 
 void bust_spinlocks(int yes)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/rcupdate.h>
-
-void call_rcu(struct rcu_head * head,rcu_callback_t func)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -485,14 +461,6 @@ void fwnode_remove_software_node(struct fwnode_handle * fwnode)
 #include <linux/uuid.h>
 
 const u8 guid_index[16] = {};
-
-
-#include <linux/sched/isolation.h>
-
-bool housekeeping_enabled(enum hk_flags flags)
-{
-	lx_emul_trace_and_stop(__func__);
-}
 
 
 #include <linux/init.h>
@@ -841,6 +809,22 @@ void printk_safe_flush_on_panic(void)
 }
 
 
+#include <linux/rcutree.h>
+
+void rcu_irq_enter_irqson(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/rcutree.h>
+
+void rcu_irq_exit_irqson(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/reboot.h>
 
 enum reboot_mode reboot_mode;
@@ -967,6 +951,14 @@ const u8 uuid_index[16] = {};
 
 #include <linux/vmalloc.h>
 
+void vfree(const void * addr)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/vmalloc.h>
+
 bool vmalloc_dump_obj(void * object)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -976,6 +968,14 @@ bool vmalloc_dump_obj(void * object)
 #include <linux/sched/wake_q.h>
 
 void wake_q_add_safe(struct wake_q_head * head,struct task_struct * task)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/wait_bit.h>
+
+void wake_up_var(void * var)
 {
 	lx_emul_trace_and_stop(__func__);
 }

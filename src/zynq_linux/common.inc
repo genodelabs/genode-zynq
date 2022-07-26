@@ -13,6 +13,9 @@ LX_ENABLE += MMU CPU_V7 ARCH_ZYNQ SERIAL_XILINX_PS_UART SERIAL_XILINX_PS_UART_CO
 # chose the RCU implementation targeted by lx_emul (tree RCU requires SMP)
 LX_ENABLE += TREE_RCU TREE_SRCU SMP
 
+# for a tickless system in idle mode, enable NO_HZ_IDLE
+LX_ENABLE += NO_HZ_IDLE
+
 # required to set UNINLINE_SPIN_UNLOCK (needed by lx_emul)
 LX_ENABLE += PREEMPT
 

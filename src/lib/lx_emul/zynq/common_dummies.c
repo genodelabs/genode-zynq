@@ -48,11 +48,6 @@ const struct trace_print_flags pageflag_names[]  = { {0,NULL}};
 const struct trace_print_flags gfpflag_names[]  = { {0,NULL}};
 
 
-#include <linux/kernel_stat.h>
-
-struct kernel_stat kstat;
-
-
 #include <linux/of_reserved_mem.h>
 #include <linux/mod_devicetable.h>
 
@@ -84,27 +79,9 @@ int __cpuhp_setup_state(enum cpuhp_state state,const char * name,bool invoke,int
 }
 
 
-#include <linux/sched/isolation.h>
-
-const struct cpumask * housekeeping_cpumask(enum hk_flags flags)
-{
-	static struct cpumask mask;
-	lx_emul_trace(__func__);
-	return &mask;
-}
-
-
 #include <linux/sched/signal.h>
 
 void ignore_signals(struct task_struct * t)
-{
-	lx_emul_trace(__func__);
-}
-
-
-#include <linux/sched.h>
-
-void do_set_cpus_allowed(struct task_struct * p,const struct cpumask * new_mask)
 {
 	lx_emul_trace(__func__);
 }

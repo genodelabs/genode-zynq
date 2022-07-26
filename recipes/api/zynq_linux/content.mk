@@ -101,21 +101,28 @@ LX_FILES += kernel/bounds.c \
             kernel/time/timeconst.bc \
             arch/arm/kernel/asm-offsets.c \
             arch/arm/kernel/signal.h \
-            arch/arm/include/asm/memory.h \
-            arch/arm/include/asm/irqflags.h \
-            arch/arm/include/asm/page.h \
-            arch/arm/include/asm/pgtable.h \
             arch/arm/include/asm/fixmap.h \
-            arch/arm/include/asm/smp_plat.h \
-            arch/arm/include/asm/suspend.h \
-            arch/arm/include/asm/kexec-internal.h \
             arch/arm/include/asm/glue-df.h \
             arch/arm/include/asm/glue-pf.h \
-            arch/arm/include/asm/mach/arch.h \
-            arch/arm/include/asm/mpu.h \
-            arch/arm/include/asm/procinfo.h \
-            arch/arm/include/asm/ucontext.h \
             arch/arm/include/asm/hardware/cache-l2x0.h \
+            arch/arm/include/asm/irqflags.h \
+            arch/arm/include/asm/kasan_def.h \
+            arch/arm/include/asm/kexec-internal.h \
+            arch/arm/include/asm/mach/arch.h \
+            arch/arm/include/asm/memory.h \
+            arch/arm/include/asm/mpu.h \
+            arch/arm/include/asm/opcodes-sec.h \
+            arch/arm/include/asm/page.h \
+            arch/arm/include/asm/pgtable-2level-hwdef.h \
+            arch/arm/include/asm/pgtable-2level-types.h \
+            arch/arm/include/asm/pgtable-2level.h \
+            arch/arm/include/asm/pgtable-hwdef.h \
+            arch/arm/include/asm/pgtable.h \
+            arch/arm/include/asm/procinfo.h \
+            arch/arm/include/asm/smp_plat.h \
+            arch/arm/include/asm/spinlock.h \
+            arch/arm/include/asm/suspend.h \
+            arch/arm/include/asm/ucontext.h \
             include/uapi/linux/arm_sdei.h \
             include/acpi \
             include/asm-generic/current.h \

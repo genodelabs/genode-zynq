@@ -42,6 +42,8 @@ kernel/sched/clock.c
 kernel/sched/completion.c
 kernel/sched/swait.c
 kernel/sched/wait.c
+kernel/smpboot.c
+kernel/softirq.c
 kernel/task_work.c
 kernel/time/clockevents.c
 kernel/time/clocksource.c
@@ -50,7 +52,10 @@ kernel/time/jiffies.c
 kernel/time/ntp.c
 kernel/time/sched_clock.c
 kernel/time/tick-broadcast.c
+kernel/time/tick-broadcast-hrtimer.c
 kernel/time/tick-common.c
+kernel/time/tick-oneshot.c
+kernel/time/tick-sched.c
 kernel/time/time.c
 kernel/time/timeconv.c
 kernel/time/timecounter.c
@@ -59,7 +64,6 @@ kernel/time/timer.c
 kernel/time/timer_list.c
 kernel/workqueue.c
 lib/bitmap.c
-lib/cpumask.c
 lib/crc32.c
 lib/ctype.c
 lib/debug_locks.c
