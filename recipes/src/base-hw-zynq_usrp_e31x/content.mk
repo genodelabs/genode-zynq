@@ -1,2 +1,1 @@
-SRC_BOOTSTRAP = board/zynq_platform.cc
-include $(GENODE_DIR)/repos/base-hw/recipes/src/base-hw_content.inc
+include $(REP_DIR)/recipes/src/base-hw-zynq_content.inc
