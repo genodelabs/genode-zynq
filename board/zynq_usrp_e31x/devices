@@ -28,9 +28,7 @@
 	</device>
 	<device name="gpio0" type="zynq-gpio">
 		<io_mem address="0xe000a000" size="0x1000"/>;
-	</device>
-	<device name="gpio1" type="zynq-gpio">
-		<io_mem address="0xe000b000" size="0x1000"/>;
+		<irq number="52"/>
 	</device>
 	<device name="sdhci0" type="arasan,sdhci-8.9a">
 		<io_mem address="0xE0100000" size="0x1000"/>;
