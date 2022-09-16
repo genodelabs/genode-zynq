@@ -11,11 +11,10 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _INCLUDE__DRIVERS__FPGA__PCAP_H_
-#define _INCLUDE__DRIVERS__FPGA__PCAP_H_
+#ifndef _DRIVERS__FPGA__PCAP_H_
+#define _DRIVERS__FPGA__PCAP_H_
 
 #include <platform_session/device.h>
-#include <os/reporter.h>
 
 namespace Fpga {
 	using namespace Genode;
@@ -25,13 +24,9 @@ namespace Fpga {
 
 class Fpga::Pcap_loader : public Platform::Device::Mmio
 {
-	public:
-		using Name = String<32>;
-
 	private:
 		Env                    &_env;
 		Platform::Connection   &_platform;
-		Reporter               &_reporter;
 
 		struct Ctrl : Register<0x0, 32>
 		{
@@ -124,27 +119,14 @@ class Fpga::Pcap_loader : public Platform::Device::Mmio
 
 		bool _device_valid() { return read<Mctrl::Version>() > 0; }
 
-		void _report(Name const &name, bool loaded)
-		{
-			Reporter::Xml_generator xml(_reporter, [&] () {
-				xml.node("bitstream", [&] () {
-					if (name != "")
-						xml.attribute("name", name);
-					xml.attribute("loaded", loaded);
-				});
-			});
-		}
-
 	public:
 
 		Pcap_loader(Env                    &env,
 		            Platform::Connection   &platform,
-		            Platform::Device       &device,
-		            Reporter               &reporter)
+		            Platform::Device       &device)
 		: Platform::Device::Mmio(device),
 		  _env(env),
-		  _platform(platform),
-		  _reporter(reporter)
+		  _platform(platform)
 		{ }
 
 		/**
@@ -157,9 +139,6 @@ class Fpga::Pcap_loader : public Platform::Device::Mmio
 				error("Invalid devcfg device");
 				return;
 			}
-
-			/* report that we unload the bitstream */
-			_report("", false);
 
 			write<Ctrl::Prog_b>(1);
 			write<Ctrl::Prog_b>(0);
@@ -174,21 +153,21 @@ class Fpga::Pcap_loader : public Platform::Device::Mmio
 		
 
 		template <typename TRANSFER>
-		void load_bitstream(size_t size, Name const &name, TRANSFER && transfer)
+		bool load_bitstream(size_t size, TRANSFER && transfer)
 		{
 			if (!_device_valid()) {
 				error("Invalid devcfg device");
-				return;
+				return false;
 			}
 
 			/* allocate DMA buffer */
 			Dma_buffer dma_buf { _env, _platform, size };
 
 			/* copy bitstream into DMA buffer */
-			size_t transferred = transfer(dma_buf.local_addr());
+			size_t transferred = transfer(dma_buf.local_addr(), size);
 			if (transferred != size) {
 				error("Failed copying ", size, " bytes to DMA buffer");
-				return;
+				return false;
 			}
 			
 			/* enable PCAP interface */
@@ -228,9 +207,8 @@ class Fpga::Pcap_loader : public Platform::Device::Mmio
 			if (!failed)
 				while (!read<Interrupts::Pfg_done>());
 
-			/* report state */
-			_report(name, !failed);
+			return !failed;
 		}
 };
 
-#endif /* _INCLUDE__DRIVERS__FPGA__PCAP_H_ */
+#endif /* _DRIVERS__FPGA__PCAP_H_ */

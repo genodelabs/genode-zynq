@@ -1,8 +1,8 @@
 <runtime ram="16M" caps="1000" binary="init" config="drivers.config">
 
 	<requires>
-		<rom label="fpga.bit"/>
-		<rom label="fpga_devices"/>
+		<file_system/>
+		<rom label="devices_manager.config"/>
 		<rom label="policy"/>
 	</requires>
 
@@ -10,10 +10,11 @@
 
 	<content>
 		<rom label="ld.lib.so"/>
-		<rom label="vfs.lib.so"/>
 		<rom label="rom_filter"/>
+		<rom label="devices_manager"/>
 		<rom label="report_rom"/>
 		<rom label="fpga_drv"/>
+		<rom label="fs_rom"/>
 		<rom label="devices"/>
 		<rom label="drivers.config"/>
 	</content>

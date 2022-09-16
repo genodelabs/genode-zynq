@@ -17,9 +17,6 @@
 #include <base/attached_rom_dataspace.h>
 #include <util/reconstructible.h>
 #include <os/reporter.h>
-#include <os/path.h>
-#include <os/vfs.h>
-#include <vfs/simple_env.h>
 
 #include "pcap.h"
 #include "bitstream.h"
@@ -27,8 +24,71 @@
 namespace Fpga {
 	using namespace Genode;
 
+	struct Managed_bitstream;
 	struct Main;
 }
+
+struct Fpga::Managed_bitstream
+{
+	using Name = String<128>;
+
+	size_t                    max_size;
+	Name                      name;
+	Attached_rom_dataspace    rom;
+	Constructible<Bitstream>  bitstream { };
+	Pcap_loader              &loader;
+	Reporter                 &reporter;
+
+	Signal_handler<Managed_bitstream> rom_handler;
+
+	Managed_bitstream(Env &env, Pcap_loader &loader, Reporter &reporter, Name const &name, size_t max_size)
+	: max_size(max_size),
+	  name(name),
+	  rom(env, name.string()),
+	  loader(loader),
+	  reporter(reporter),
+	  rom_handler(env.ep(), *this, &Managed_bitstream::handle_rom)
+	{
+		handle_rom();
+
+		rom.sigh(rom_handler);
+	}
+
+	~Managed_bitstream()
+	{
+		/* report that we unload the bitstream */
+		report("", false);
+
+		loader.reset();
+	}
+
+	void handle_rom()
+	{
+		rom.update();
+
+		bitstream.construct(rom, max_size);
+
+		log("Loading bitstream ", name, " of size ", Hex(bitstream->size()));
+
+		bool loaded = loader.load_bitstream(bitstream->size(), [&] (char * buf, size_t buf_sz) {
+			return bitstream->read_bitstream(buf, buf_sz);
+		});
+
+		report(name, loaded);
+	}
+
+	void report(Name const &name, bool loaded)
+	{
+		Reporter::Xml_generator xml(reporter, [&] () {
+			xml.node("bitstream", [&] () {
+				if (name != "")
+					xml.attribute("name", name);
+				xml.attribute("loaded", loaded);
+			});
+		});
+	}
+
+};
 
 struct Fpga::Main
 {
@@ -38,40 +98,19 @@ struct Fpga::Main
 	Heap                               heap              { env.ram(), env.rm() };
 
 	Attached_rom_dataspace             config_rom        { env, "config" };
-	Vfs::Simple_env                    vfs_env           { env, heap, vfs_config() };
 
 	Signal_handler<Main>               config_handler    { env.ep(), *this, &Main::handle_config };
-	Constructible<Watch_handler<Main>> bitstream_handler { };
 
-	bool                               enabled           { false };
-	Directory::Path                    bitstream_path    { };
+	Constructible<Managed_bitstream>   managed_bitstream { };
 
 	Reporter                           reporter          { env, "state" };
 
 	Platform::Connection               platform          { env };
 	Platform::Device                   device            { platform,
 	                                                       Type { "xlnx,zynq-devcfg-1.0" } };
-	Pcap_loader                        loader            { env, platform, device, reporter };
-
-	Xml_node vfs_config()
-	{
-		try { return config_rom.xml().sub_node("vfs"); }
-		catch (...) {
-			Genode::error("VFS not configured");
-			env.parent().exit(~0);
-			throw;
-		}
-	}
-
-	void handle_bitstream()
-	{
-		if (enabled)
-			load_bitstream(bitstream_path);
-	}
+	Pcap_loader                        loader            { env, platform, device };
 
 	void handle_config();
-
-	void load_bitstream(Directory::Path const &);
 
 	Main(Env &env) : env(env)
 	{
@@ -88,63 +127,26 @@ struct Fpga::Main
 };
 
 
-void Fpga::Main::load_bitstream(Directory::Path const &path)
-{
-	Directory         root_dir  { vfs_env };
-
-	/* get file name from path using Genode::Path */
-	Genode::Path<256> pathname  { path };
-	pathname.keep_only_last_element();
-	Pcap_loader::Name file_name { &pathname.string()[1] };
-
-	try {
-		Bitstream         bitstream { root_dir, path };
-
-		log("Loading bitstream ", path, " of size ", Hex(bitstream.bitstream_size()));
-
-		loader.load_bitstream(bitstream.bitstream_size(), file_name, [&] (char * buf) {
-			return bitstream.read_bitstream(buf);
-		});
-
-	} catch (...) { error("failed to load bitstream"); }
-}
-
 void Fpga::Main::handle_config()
 {
-	/* update ROM and apply to vfs */
 	config_rom.update();
-	vfs_env.root_dir().apply_config(vfs_config());
 
-	/* get enabled state and bitstream path from XML */
-	bool            new_enabled = config_rom.xml().attribute_value("enable",    enabled);
-	Directory::Path new_path    = config_rom.xml().attribute_value("bitstream", bitstream_path);
+	config_rom.xml().with_sub_node("bitstream",
+		[&] (Xml_node const &xml) {
+			Managed_bitstream::Name new_name = xml.attribute_value("name", Managed_bitstream::Name(""));
+			size_t                  max_size = xml.attribute_value("size", 0);
 
-	if (enabled && !new_enabled) {
-		loader.reset();
+			if (new_name == "")
+				managed_bitstream.destruct();
+			else if (!managed_bitstream.constructed() || new_name != managed_bitstream->name)
+				managed_bitstream.construct(env, loader, reporter, new_name, max_size);
 
-		if (bitstream_handler.constructed())
-			bitstream_handler.destruct();
-	}
-	else if (new_enabled) {
-
-		if (new_path != bitstream_path ||
-		    new_enabled != enabled)
-		{
-			/* update watch handler */
-			bitstream_handler.conditional(new_enabled,
-			                              vfs_env.root_dir(),
-			                              new_path,
-			                              heap,
-			                              *this,
-			                              &Main::handle_bitstream);
-
-			load_bitstream(new_path);
+		},
+		[&] () {
+			warning("<bitstream> missing");
+			managed_bitstream.destruct();
 		}
-	}
-
-	/* store config values */
-	enabled        = new_enabled;
-	bitstream_path = new_path;
+	);
 }
 
 

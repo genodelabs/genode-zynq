@@ -19,11 +19,11 @@
  * under the terms of the GNU Affero General Public License version 3.
  */
 
-#ifndef _INCLUDE__DRIVERS__FPGA__BITSTREAM_H_
-#define _INCLUDE__DRIVERS__FPGA__BITSTREAM_H_
+#ifndef _DRIVERS__FPGA__BITSTREAM_H_
+#define _DRIVERS__FPGA__BITSTREAM_H_
 
+#include <base/attached_rom_dataspace.h>
 #include <util/endian.h>
-#include <os/vfs.h>
 
 namespace Fpga {
 	using namespace Genode;
@@ -31,7 +31,7 @@ namespace Fpga {
 	class Bitstream;
 }
 
-class Fpga::Bitstream : public Readonly_file
+class Fpga::Bitstream
 {
 	public:
 		struct Format_error : Genode::Exception { };
@@ -40,43 +40,44 @@ class Fpga::Bitstream : public Readonly_file
 		struct Header_length_error : Exception { };
 		struct Header_error        : Exception { };
 
-		enum { CHUNK_SIZE = 4096 };
-
 		enum Format { INVALID     = 0,
 		              RAW         = 1,
 		              SWAP_NEEDED = 2 };
 
-		size_t const _file_size;
-		size_t       _bitstream_size { _file_size };
-		char         _buf[CHUNK_SIZE];
-		Format       _format { INVALID };
-		size_t       _offset { 0 };
+		size_t                  _bitstream_size { 0 };
+		Format                  _format { INVALID };
+		size_t                  _offset { 0 };
+		Attached_rom_dataspace &_rom;
 
 		static Format _detect_format(char * buf, size_t buf_sz, size_t & offset, size_t & length);
 		static size_t _parse_header_field(char magic, char * buf, size_t buf_sz, size_t pos);
 		static size_t _parse_size_field(char * buf, size_t buf_sz, size_t pos, size_t & size);
 
-		size_t _read_swapped(char * dst, size_t dst_size) const;
+		size_t _read_swapped(char * dst, size_t size) const;
+
+		char *_bitstream_start() const { return _rom.local_addr<char>() + _offset; }
 
 	public:
 
-		Bitstream(Directory const &dir, Path const &rel_path)
-		: Readonly_file(dir, rel_path),
-		  _file_size((size_t)dir.file_size(rel_path))
+		Bitstream(Attached_rom_dataspace &rom, size_t max_size = 0)
+		: _rom(rom)
 		{
-			/* read header into buffer */
-			size_t hdr_sz = read(_buf, min(sizeof(_buf), _file_size));
 			size_t length { 0 };
 
 			/* detect format and store in members */
-			_format = _detect_format(_buf, hdr_sz, _offset, length);
+			_format = _detect_format(_rom.local_addr<char>(), _rom.size(), _offset, length);
 			switch (_format)
 			{
 				case INVALID:
 					error("Invalid bitstream file");
 					throw Format_error();
 				case RAW:
-					_bitstream_size = _file_size;
+					if (max_size == 0) {
+						warning("no max_size attribute provided for bitstream in raw/bin format");
+						_bitstream_size = _rom.size();
+					}
+					else
+						_bitstream_size = min(_rom.size(), max_size);
 					break;
 				case SWAP_NEEDED:
 					_bitstream_size = length;
@@ -84,20 +85,23 @@ class Fpga::Bitstream : public Readonly_file
 			}
 		}
 
-		size_t read_bitstream(char *dst) const
+		size_t read_bitstream(char *dst, size_t dst_sz) const
 		{
+			size_t sz = min(_bitstream_size, dst_sz);
+
 			switch (_format)
 			{
 				case RAW:
-					return read(At{_offset}, dst, _bitstream_size);
+					Genode::memcpy(dst, _bitstream_start(), sz);
+					return sz;
 				case SWAP_NEEDED:
-					return _read_swapped(dst, _bitstream_size);
+					return _read_swapped(dst, sz);
 				default:
 					return 0;
 			}
 		}
 
-		size_t bitstream_size() const { return _bitstream_size; }
+		size_t size() const { return _bitstream_size; }
 };
 
 
@@ -191,35 +195,22 @@ Fpga::Bitstream::_detect_format(char           * buf,
 }
 
 
-Genode::size_t Fpga::Bitstream::_read_swapped(char * dst, Genode::size_t dst_size) const
+Genode::size_t Fpga::Bitstream::_read_swapped(char * dst, size_t size) const
 {
-	/* chunked read */
 	size_t written { 0 };
-	size_t size { min(dst_size, _bitstream_size) };
 
-	do {
-		size_t bytes_read = read(At { written + _offset },
-		                         (char*)_buf,
-		                         min(sizeof(_buf), size-written));
+	if (size & 0x3)
+		error("Skipping last incomplete word of bitstream");
 
-		if (bytes_read < 4) {
-			error("Skipping last incomplete word of bitstream");
-			break;
-		}
-
-		uint32_t * dst_words = reinterpret_cast<uint32_t*>(&dst[written]);
-		uint32_t * src_words = reinterpret_cast<uint32_t*>((char*)_buf);
-		for (size_t word { 0 }; word < bytes_read / 4; word++)
-		{
-			/* copy word and swap endianess */
-			dst_words[word] = host_to_big_endian(src_words[word]);
-
-			written += 4;
-		}
-
-	} while (written < size);
+	uint32_t * dst_words = reinterpret_cast<uint32_t*>(dst);
+	uint32_t * src_words = reinterpret_cast<uint32_t*>(_bitstream_start());
+	for (size_t word { 0 }; word < size / 4; word++, written += 4)
+	{
+		/* copy word and swap endianess */
+		dst_words[word] = host_to_big_endian(src_words[word]);
+	}
 
 	return written;
 }
 
-#endif /* _INCLUDE__DRIVERS__FPGA__BITSTREAM_H_ */
+#endif /* _DRIVERS__FPGA__BITSTREAM_H_ */

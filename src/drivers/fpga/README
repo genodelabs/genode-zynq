@@ -3,15 +3,19 @@ PCAP interface.
 
 An examplary configuration of the component is shown below:
 
-! <config bitstream="/bitstreams/fpga.bit" enable="yes">
-!   <vfs>
-!     <dir name="bitstreams">
-!       <rom name="fpga.bit"/>
-!     </dir>
-!   </vfs>
+! <config>
+!   <bitstream name="fpga.bit" size="0x3dbafc"/>
 ! </config>
 
-The bitstream to be loaded is made available to the component via the vfs. The
-path where the bitstream is found must thus be specified by the 'bitstream'
-attribute. The state of the FPGA, i.e. whether to load a bitstream or merely
-rest the FPGA, is defined by the 'enable' attribute.
+The contains a single 'bitstream' node with a mandatory 'name' and an optional
+'size' attribute. The driver will request a ROM session with the provided name
+that must contain a valid bitstream file. In 'size' attribute restricts the
+length of the bitstream in case a RAW bitstream format without size information
+is used. Note that the FPGA is reprogrammed only if the name of the bitstream
+changed. If the configuration is incomplete, the driver will reset the FPGA.
+
+The state of the FPGA is reported by the fpga_drv as follows:
+
+! <state>
+!   <bitstream name="fpga.bit" loaded="yes"/>
+! </state>

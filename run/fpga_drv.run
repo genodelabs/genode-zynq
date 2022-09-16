@@ -7,6 +7,7 @@ create_boot_directory
 import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/init \
                   [depot_user]/pkg/drivers_fpga-zynq \
+                  [depot_user]/src/vfs \
                   [depot_user]/raw/[board]-devices
 
 
@@ -34,9 +35,25 @@ set config  {
 			<provides><service name="Timer"/></provides>
 		</start>
 
+		<start name="vfs">
+			<resource name="RAM" quantum="8M"/>
+			<provides><service name="File_system"/></provides>
+			<config>
+				<vfs>
+					<inline name="config">
+						<config>
+							<bitstream name="fpga.bit" size="0x3dbafc"/>
+						</config>
+					</inline>
+					<rom name="fpga.bit"/>
+				</vfs>
+				<default-policy root="/" writeable="no"/>
+			</config>
+		</start>
+
 		<start name="platform_drv" caps="1000" managing_system="yes">
 			<binary name="init"/>
-			<resource name="RAM" quantum="20M"/>
+			<resource name="RAM" quantum="24M"/>
 			<provides> <service name="Platform"/> </provides>
 			<route>
 				<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
@@ -70,18 +87,22 @@ puts $policy_fd {
 close $policy_fd
 
 #
-# Create fpga_devices
+# Create devices_manager.config
 #
-set fpga_devices_fd [open [run_dir]/genode/fpga_devices w]
-puts $fpga_devices_fd {
-	<devices>
-		<device name="axi-dmac-rx" type="rx_dmac">
-			<io_mem address="0x7c400000" size="0x10000"/>;
-			<irq number="89"/>
-		</device>
-	</devices>
+set devices_manager_config_fd [open [run_dir]/genode/devices_manager.config w]
+puts $devices_manager_config_fd {
+<config>
+	<bitstream name="fpga.bit">
+		<devices>
+			<device name="axi-dmac-rx" type="rx_dmac">
+				<io_mem address="0x7c400000" size="0x10000"/>;
+				<irq number="89"/>
+			</device>
+		</devices>
+	</bitstream>
+</config>
 }
-close $fpga_devices_fd
+close $devices_manager_config_fd
 
 #
 # Boot modules
