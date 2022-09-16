@@ -1,0 +1,29 @@
+The devices manager generates a devices report to be used by the platform
+driver depending on the currently loaded bitstream.
+
+For this purpose, the component requires a 'devices' ROM and an 'fpga_state'
+ROM. The former contains the static devices of the platform whereas the latter
+provides the FPGA state as reported by the FPGA driver (contains bitstream name
+and status).
+
+The driver manager copies the content from the 'devices' ROM to its devices
+report.
+
+If any bitstream has been loaded, the devices manager will also look for a
+'<bitstream>' node in its config with a matching 'name' attribute and copy the
+content of the '<devices>' sub node into the report.
+
+The component configuration is structured as follows:
+
+! <config>
+!   <bitstream name="...">
+!     <devices>
+!       [...]
+!     </devices>
+!   </bitstream>
+!   <bitstream name="...">
+!     <devices>
+!       [...]
+!     </devices>
+!   </bitstream>
+! </config>
