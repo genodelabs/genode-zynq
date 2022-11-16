@@ -1,0 +1,123 @@
+#!/usr/bin/tclsh
+
+#
+# \brief  Export parameters from xsa file
+# \author Johannes Schlatow
+# \date   2022-11-15
+#
+# The tool takes an xsa as exported from Xilinx Vivado as input and writes
+# definitions for the used parameters to standard output. The set of used
+# parameters is determined from the source code in this repo by looking for
+# 'XPAR_(.*)__(.*)' strings. The first sub-group determines the modtype to be
+# looking for and the second sub-group determines the parameter name.
+# The output definitions are supposed to be copied manually into the device ROM
+# of the platform driver.
+#
+
+package require tdom
+
+set xsa_input_file [lindex $argv end]
+
+
+##
+# Find used XPAR parameters in source code
+##
+proc find_used_parameters { } {
+	global argv0
+
+	set path $argv0
+
+	# Where are we?
+	if {[file type $path] == "link"} {
+		set path [file readlink $path] }
+
+	# change into repo root
+	set oldpath [pwd]
+	cd [file join [file dirname $path] ..]
+
+	# grep in git repo
+	set grep_result [split [exec git grep "XPAR_" src/] "\n"]
+
+	# change back into original working directory
+	cd $oldpath
+
+	set result [list]
+	foreach line $grep_result {
+		if {[regexp "\"(XPAR_.*)\"" $line dummy xpar]} {
+			lappend result $xpar
+		}
+	}
+
+	return $result
+}
+
+
+##
+# Parse embedded .hwh file from xsa (which is a zip archive)
+##
+proc parse_hwh { xsa_file } {
+	return [dom parse [exec unzip -p $xsa_file *.hwh]]
+}
+
+
+if {![file exists $xsa_input_file]} {
+	puts stderr ""
+	puts stderr "Extract used XPAR parameters from xsa file"
+	puts stderr "\n  usage: xpar_from_xsa <xsa_file>"
+	puts stderr ""
+	puts stderr "<xsa_file> is the name of the xsa file as exported from Xilinx"
+	puts stderr "Vivado."
+	puts stderr ""
+	exit -1;
+}
+
+set modtype_pattern "XPAR_(.+)__(.+)"
+
+set parameters [find_used_parameters]
+
+set doc [parse_hwh $xsa_input_file]
+foreach module [$doc selectNodes //MODULE\[@MODCLASS="PERIPHERAL"\]] {
+	set modtype [$module @MODTYPE]
+	set instance [$module @INSTANCE]
+
+	set memranges [$doc selectNodes //MEMRANGE\[@MEMTYPE="REGISTER"\]\[@INSTANCE="$instance"\]]
+
+	if {[llength $memranges] == 0} { continue }
+
+	set headstr "Instance \"[$module @INSTANCE]\" of type $modtype"
+	regsub -all -- . $headstr {#} headline
+	puts "\n$headline"
+	puts "$headstr"
+	puts $headline
+
+	puts "<device name=\"[$module @INSTANCE]\" type=\"[$module @MODTYPE]\">"
+
+	# find memory ranges
+	foreach memrange $memranges {
+		set io_mem_base [$memrange @BASEVALUE]
+		set io_mem_high [$memrange @HIGHVALUE]
+		puts "\t<io_mem address=\"$io_mem_base\" size=\"[format 0x%x [expr $io_mem_high - $io_mem_base + 1]]\"/>"
+	}
+
+	# find clocks
+	set clocklist [list]
+	foreach clk [$module selectNodes .//PORT\[@CLKFREQUENCY\]] {
+		set connection [$clk selectNodes .//CONNECTION\[@PORT\]]
+		if {[regexp "FCLK_CLK(\[0-9\])" [$connection @PORT] clkname clknum]} {
+			if {$clkname in $clocklist} { continue }
+			puts "\t<clock name=\"fpga$clknum\" driver_name=\"fpga$clknum\" rate=\"[$clk @CLKFREQUENCY]\"/>"
+			lappend clocklist $clkname
+		}
+	}
+
+	# find parameters
+	foreach par $parameters {
+		regexp $modtype_pattern $par dummy modtype_param param
+		if { [string tolower $modtype_param] == $modtype } {
+			foreach param_node [$module selectNodes .//PARAMETER\[@NAME="C_$param"\]] {
+				puts "\t<property name=\"XPAR_${modtype_param}__$param\" value=\"[$param_node @VALUE]\"/>"
+			}
+		}
+	}
+	puts "</device>"
+}
