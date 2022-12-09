@@ -21,7 +21,7 @@ namespace Zynq_qemu {
 	using namespace Zynq;
 
 	enum {
-		RAM_0_SIZE = 0x40000000, /* 1GiB */
+		RAM_0_SIZE = 0x3FF00000, /* 1GiB */
 
 		UART_CLOCK = 50*1000*1000,
 		UART_BASE  = UART_0_MMIO_BASE,
