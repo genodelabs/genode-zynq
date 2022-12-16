@@ -56,7 +56,9 @@ proc find_used_parameters { } {
 # Parse embedded .hwh file from xsa (which is a zip archive)
 ##
 proc parse_hwh { xsa_file } {
-	return [dom parse [exec unzip -p $xsa_file *.hwh]]
+	set sysdef [dom parse [exec unzip -p $xsa_file sysdef.xml]]
+	set default_bd [[$sysdef selectNodes //File\[@BD_TYPE="DEFAULT_BD"\]] @Name]
+	return [dom parse [exec unzip -p $xsa_file $default_bd]]
 }
 
 
