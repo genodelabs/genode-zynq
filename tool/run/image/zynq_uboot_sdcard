@@ -15,9 +15,12 @@ proc image_uboot_use_no_gzip { } { return [get_cmd_switch --image-uboot-no-gzip]
 #
 proc image_uboot_bitstream   { } { return [get_cmd_arg --image-uboot-bitstream ""] }
 
-proc run_image {elf_img} {
+proc run_image { } {
+
+	set elf_img [file join [run_dir] boot image.elf]
 
 	set mcopy     [installed_command mcopy]
+	set mmd       [installed_command mmd]
 	set mkimage   [installed_command mkimage]
 
 	#
@@ -33,8 +36,8 @@ proc run_image {elf_img} {
 	# Build uImage
 	#
 
-	set bin_img   [run_dir]/image.bin
-	set uboot_img [run_dir]/uImage
+	set bin_img   [file join [run_dir] boot image.bin]
+	set uboot_img [file join [run_dir] boot uImage]
 	set entrypoint [exec [cross_dev_prefix]readelf -h $elf_img | \
 	                grep "Entry point address: " | \
 	                sed -e "s/.*Entry point address: *//"]
@@ -42,12 +45,12 @@ proc run_image {elf_img} {
 	               grep -m 1 "LOAD"]
 	set load_addr [lindex [regexp -inline -all -- {\S+} $load_addr] 3]
 
-	exec mkdir -p [run_dir]/ext2
+	exec mkdir -p [file join [run_dir] boot]
 	exec [cross_dev_prefix]objcopy -O binary $elf_img $bin_img
 	exec gzip --best --force $bin_img
 	exec $mkimage -A arm -O linux -T kernel -C gzip -a $load_addr \
 	              -e $entrypoint -d $bin_img.gz $uboot_img
-	exec rm -rf $bin_img.gz
+	exec rm -rf $bin_img.gz $elf_img
 
 	#
 	# Inject uImage into $base_img with mcopy
@@ -56,14 +59,15 @@ proc run_image {elf_img} {
 	set img_file [run_dir].img.incomplete
 
 	exec cp $base_img $img_file
-	exec $mcopy -i $img_file@@1M $uboot_img ::
+	exec $mmd -i $img_file@@1M ::boot
+	exec $mcopy -i $img_file@@1M $uboot_img ::boot/uImage
 
 	#
 	# Inject bitstream with mcopy
 	#
 	set bitstream [image_uboot_bitstream]
 	if {[string length $bitstream] > 0} {
-		exec $mcopy -i $img_file@@1M $bitstream ::fpga.bit
+		exec $mcopy -i $img_file@@1M $bitstream ::boot/fpga.bit
 	}
 
 	exec mv $img_file [run_dir].img
