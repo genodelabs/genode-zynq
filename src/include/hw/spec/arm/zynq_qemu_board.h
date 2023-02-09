@@ -22,6 +22,8 @@ namespace Hw::Zynq_qemu_board {
 
 	using namespace Zynq_qemu;
 	using Serial   = Genode::Xilinx_uart;
+
+	enum { NR_OF_CPUS = 1 };
 }
 
 #endif /* _SRC__INCLUDE__HW__SPEC__ARM__ZYNQ_BOARD_H_ */

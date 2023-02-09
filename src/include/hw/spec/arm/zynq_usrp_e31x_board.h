@@ -22,6 +22,8 @@ namespace Hw::Zynq_usrp_e31x_board {
 
 	using namespace Zynq_usrp_e31x;
 	using Serial   = Genode::Xilinx_uart;
+
+	enum { NR_OF_CPUS = 2 };
 }
 
 #endif /* _SRC__INCLUDE__HW__SPEC__ARM__ZYNQ_USRP_E31x_BOARD_H_ */
