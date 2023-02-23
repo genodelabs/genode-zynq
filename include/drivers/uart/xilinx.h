@@ -124,6 +124,12 @@ class Genode::Xilinx_uart: public Mmio
 			/* transmit character */
 			write<Uart_fifo::Data>(c);
 		}
+
+
+		/**
+		 * On resume re-init serial device
+		 */
+		void init() { /* not supported */ }
 };
 
 #endif /* _INCLUDE__DRIVERS__UART__XILINX_H_ */
