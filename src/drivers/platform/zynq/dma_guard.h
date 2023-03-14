@@ -14,12 +14,17 @@
 #ifndef _SRC__DRIVERS__PLATFORM__DMA_GUARD_H_
 #define _SRC__DRIVERS__PLATFORM__DMA_GUARD_H_
 
+/* Genode includes */
 #include <os/attached_mmio.h>
 #include <util/register_set.h>
 #include <util/misc_math.h>
 #include <base/allocator.h>
 
+/* Platform-driver includes */
+#include <common.h>
 #include <device.h>
+#include <io_mmu.h>
+#include <dma_allocator.h>
 
 namespace Driver {
 	using namespace Genode;
@@ -30,8 +35,39 @@ namespace Driver {
 
 
 class Driver::Dma_guard : private Attached_mmio,
-                          public  Driver::Control_device
+                          public  Driver::Io_mmu
 {
+	public:
+
+		/* Use derived domain class to store reference to buffer registry */
+		class Domain : public Driver::Io_mmu::Domain
+		{
+			private:
+
+				Dma_guard                  & _dma_guard;
+				Registry<Dma_buffer> const & _buffer_registry;
+
+			public:
+
+				void enable_pci_device(Io_mem_dataspace_capability const, Pci::Bdf const) override { };
+				void disable_pci_device(Io_mem_dataspace_capability const, Pci::Bdf const) override { };
+
+				void add_range(Range const & range, Dataspace_capability const) override { _dma_guard._add_range(range); }
+				void remove_range(Range const & range) override                          { _dma_guard._remove_range(range); }
+
+				Domain(Dma_guard & dma_guard, Allocator & md_alloc, Registry<Dma_buffer> const & buffer_registry)
+				: Driver::Io_mmu::Domain(dma_guard, md_alloc, buffer_registry),
+				  _dma_guard(dma_guard),
+				  _buffer_registry(buffer_registry)
+				{ }
+
+				~Domain() override
+				{
+					_buffer_registry.for_each([&] (Dma_buffer const & buf) {
+						remove_range({ buf.dma_addr, buf.size }); });
+				}
+		};
+
 	private:
 
 		enum {
@@ -59,8 +95,11 @@ class Driver::Dma_guard : private Attached_mmio,
 			struct Addr      : Bitfield<12,20> { };
 		};
 
+		void _add_range(Range);
+		void _remove_range(Range);
+
 		/**
-		 * Control_device interface
+		 * Iommu interface
 		 */
 
 		void _enable() override {
@@ -69,29 +108,36 @@ class Driver::Dma_guard : private Attached_mmio,
 		void _disable() override {
 			write<Ctrl::Enable>(Ctrl::Enable::DENY); }
 
-		void _add_range(Range) override;
-		void _remove_range(Range) override;
-
 	public:
 
 		/**
-		 * Control_device interface
+		 * Iommu interface
 		 */
+
+		bool mpu() override { return true; }
+
+		Driver::Io_mmu::Domain & create_domain(Allocator & md_alloc,
+		                                       Registry<Dma_buffer> const & buffer_registry,
+		                                       Ram_quota_guard &,
+		                                       Cap_quota_guard &) override
+		{
+			return *new (md_alloc) Dma_guard::Domain(*this, md_alloc, buffer_registry);
+		}
 
 
 		Dma_guard(Env                      & env,
-		          Control_devices          & control_devices,
+		          Io_mmu_devices           & io_mmu_devices,
 		          Device::Name       const & name,
 		          Device::Io_mem::Range      range)
 		: Attached_mmio(env, range.start, range.size),
-		  Control_device(control_devices, name)
+		  Io_mmu(io_mmu_devices, name)
 		{ };
 
 		~Dma_guard() { _destroy_domains(); }
 };
 
 
-class Driver::Dma_guard_factory : public Driver::Control_device_factory
+class Driver::Dma_guard_factory : public Driver::Io_mmu_factory
 {
 	private:
 
@@ -100,18 +146,18 @@ class Driver::Dma_guard_factory : public Driver::Control_device_factory
 	public:
 
 		Dma_guard_factory(Genode::Env & env, Common & common)
-		: Control_device_factory(common.control_device_factories(), Device::Type { "dma_guard" }),
+		: Io_mmu_factory(common.io_mmu_factories(), Device::Type { "dma_guard" }),
 		  _env(env)
 		{ }
 
-		void create(Allocator & alloc, Control_devices & control_devices, Device const & device) override
+		void create(Allocator & alloc, Io_mmu_devices & io_mmu_devices, Device const & device) override
 		{
 			using Range = Device::Io_mem::Range;
 
 			device.for_each_io_mem([&] (unsigned idx, Range range, Device::Pci_bar, bool)
 			{
 				if (idx == 0)
-					new (alloc) Dma_guard(_env, control_devices, device.name(), range);
+					new (alloc) Dma_guard(_env, io_mmu_devices, device.name(), range);
 			});
 		}
 };
