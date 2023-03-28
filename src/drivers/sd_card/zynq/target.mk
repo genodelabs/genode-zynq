@@ -2,10 +2,11 @@ DRIVER := zynq_sd_card
 TARGET := $(DRIVER)_drv
 
 REQUIRES := arm_v7a
-LIBS = base zynq_lx_emul
+LIBS = base zynq_lx_emul jitterentropy
 
 SRC_CC += main.cc
 SRC_CC += lx_emul/shared_dma_buffer.cc
+SRC_CC += lx_emul/random.cc
 SRC_C  += block.c
 
 SRC_CC  += genode_c_api/block.cc

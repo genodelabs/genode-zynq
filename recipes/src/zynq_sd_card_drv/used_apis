@@ -6,3 +6,4 @@ block_session
 report_session
 genode_c_api
 zynq_linux
+jitterentropy

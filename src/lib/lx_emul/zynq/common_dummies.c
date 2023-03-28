@@ -87,14 +87,6 @@ void ignore_signals(struct task_struct * t)
 }
 
 
-#include <linux/sched/loadavg.h>
-
-void calc_global_load(void)
-{
-	lx_emul_trace(__func__);
-}
-
-
 #include <linux/kernel_stat.h>
 
 void account_process_tick(struct task_struct * p,int user_tick)
@@ -131,14 +123,6 @@ int software_node_notify(struct device * dev,unsigned long action)
 
 #include <linux/random.h>
 
-void get_random_bytes(void * buf,int nbytes)
-{
-	lx_emul_trace(__func__);
-}
-
-
-#include <linux/random.h>
-
 int __must_check get_random_bytes_arch(void * buf,int nbytes)
 {
 	lx_emul_trace(__func__);
@@ -147,6 +131,7 @@ int __must_check get_random_bytes_arch(void * buf,int nbytes)
 
 
 #include <linux/random.h>
+struct random_ready_callback;
 
 int add_random_ready_callback(struct random_ready_callback * rdy)
 {
@@ -178,6 +163,22 @@ bool parse_option_str(const char *str, const char *option)
 {
 	lx_emul_trace(__func__);
 	return false;
+}
+
+
+#include <linux/random.h>
+
+void add_device_randomness(const void * buf,size_t len)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/random.h>
+
+void add_interrupt_randomness(int irq)
+{
+	lx_emul_trace(__func__);
 }
 
 

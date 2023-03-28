@@ -55,7 +55,9 @@ LX_FILES += Makefile \
             scripts/config \
             scripts/basic/fixdep.c \
             scripts/cc-version.sh \
+            scripts/check-local-export \
             scripts/ld-version.sh \
+            scripts/mkcompile_h \
             scripts/dtc \
             scripts/kconfig/merge_config.sh \
             scripts/remove-stale-files \
@@ -65,10 +67,11 @@ LX_FILES += Makefile \
             scripts/min-tool-version.sh \
             scripts/as-version.sh \
             scripts/mod \
+            scripts/pahole-flags.sh \
+            scripts/pahole-version.sh \
             scripts/checksyscalls.sh \
             scripts/syscallhdr.sh \
             scripts/syscalltbl.sh \
-            scripts/atomic/check-atomics.sh \
             tools/include/tools \
             arch/arm/Makefile \
             arch/arm/configs \
@@ -101,6 +104,7 @@ LX_FILES += kernel/bounds.c \
             kernel/time/timeconst.bc \
             arch/arm/kernel/asm-offsets.c \
             arch/arm/kernel/signal.h \
+            arch/arm/include/asm/current.h \
             arch/arm/include/asm/fixmap.h \
             arch/arm/include/asm/glue-df.h \
             arch/arm/include/asm/glue-pf.h \
@@ -122,6 +126,7 @@ LX_FILES += kernel/bounds.c \
             arch/arm/include/asm/smp_plat.h \
             arch/arm/include/asm/spinlock.h \
             arch/arm/include/asm/suspend.h \
+            arch/arm/include/asm/tlbflush.h \
             arch/arm/include/asm/ucontext.h \
             include/uapi/linux/arm_sdei.h \
             include/acpi \
@@ -130,9 +135,11 @@ LX_FILES += kernel/bounds.c \
             include/asm-generic/qspinlock.h \
             include/asm-generic/fixmap.h \
             include/asm-generic/pgtable_uffd.h \
+            include/asm-generic/tlbflush.h \
             include/linux/arm_sdei.h \
             include/linux/arm-smccc.h \
             include/linux/cper.h \
+            include/linux/page_table_check.h \
             include/linux/pgtable.h
 
 # needed for gen_crc32table

@@ -87,14 +87,6 @@ int pinctrl_init_done(struct device * dev)
 }
 
 
-#include <linux/random.h>
-
-void add_interrupt_randomness(int irq,int irq_flags)
-{
-	lx_emul_trace(__func__);
-}
-
-
 #include <linux/prandom.h>
 
 u32 prandom_u32(void)
@@ -169,7 +161,7 @@ int __cpuhp_state_add_instance(enum cpuhp_state state,struct hlist_node * node,b
 }
 
 
-#include <linux/genhd.h>
+#include <linux/blkdev.h>
 
 void rand_initialize_disk(struct gendisk * disk)
 {
@@ -185,9 +177,49 @@ void blkdev_put(struct block_device * bdev,fmode_t mode)
 }
 
 
-#include <linux/wait_bit.h>
+#include <net/net_namespace.h>
 
-void __init wait_bit_init(void)
+void __init net_ns_init(void)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/random.h>
+
+void get_random_bytes(void * buf,size_t len)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/random.h>
+
+bool rng_is_initialized(void)
+{
+	lx_emul_trace(__func__);
+	return 0;
+}
+
+
+extern void software_node_notify_remove(struct device * dev);
+void software_node_notify_remove(struct device * dev)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/context_tracking_irq.h>
+
+noinstr void ct_irq_enter(void)
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/context_tracking_irq.h>
+
+noinstr void ct_irq_exit(void)
 {
 	lx_emul_trace(__func__);
 }
