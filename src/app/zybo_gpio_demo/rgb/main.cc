@@ -66,7 +66,8 @@ class Demo::Rgb_leds : public Platform::Device::Mmio
 {
 	private:
 
-		struct Led : Genode::Mmio {
+		struct Led : Genode::Mmio
+		{
 			struct Color      : Register<0x0, 32> { };
 			struct Brightness : Register<0x4, 32> { };
 
@@ -75,6 +76,8 @@ class Demo::Rgb_leds : public Platform::Device::Mmio
 
 			void brightness(uint32_t b) {
 				write<Brightness>(b); }
+
+			using Mmio::Mmio;
 		};
 
 		Led led0 { (addr_t)local_addr<void>() };
