@@ -23,7 +23,7 @@ namespace Hw::Zynq_zybo_z7_board {
 	using namespace Zynq_zybo_z7;
 	using Serial   = Genode::Xilinx_uart;
 
-	enum { NR_OF_CPUS = 2 };
+	static constexpr Genode::size_t NR_OF_CPUS = 2;
 }
 
 #endif /* _SRC__INCLUDE__HW__SPEC__ARM__ZYNQ_ZYBO_Z7_BOARD_H_ */
