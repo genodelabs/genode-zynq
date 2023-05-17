@@ -66,6 +66,7 @@ struct Pin_driver::Function
 	             FN4   = 4, FN5    = 5, IRQ = 6, DISABLE = 7 } value;
 
 	Function() = delete;
+	Function(Value value) : value(value) { }
 
 	class Invalid : Exception { };
 
@@ -190,28 +191,35 @@ struct Pin_driver::Attr
 	bool        out_on_demand;  /* activate output on access by 'Pin_control' client */
 	bool        default_state;
 
-	Attr() = delete;
-
 	bool output() const { return function.value == Function::OUTPUT; }
 	bool irq()    const { return function.value == Function::IRQ; }
 
 	static Attr from_xml(Xml_node const &node)
 	{
-		return { .pull          = Pull::from_xml(node),
-		         .function      = Function::from_xml(node),
-		         .irq_trigger   = Irq_trigger::from_xml(node),
-		         .out_on_demand = !node.has_attribute("default"),
-		         .default_state = node.attribute_value("default", false) };
+		return { Pull::from_xml(node),
+		         Function::from_xml(node),
+		         Irq_trigger::from_xml(node),
+		         !node.has_attribute("default"),
+		         node.attribute_value("default", false) };
 	}
 
 	static Attr disabled()
 	{
-		return { .pull          = { Pull::DISABLE },
-		         .function      = { Function::DISABLE },
-		         .irq_trigger   = { Irq_trigger::RISING },
-		         .out_on_demand = false,
-		         .default_state = false };
+		return { { Pull::DISABLE },
+		         { Function::DISABLE },
+		         { Irq_trigger::RISING },
+		         false,
+		         false };
 	}
+
+	private:
+
+		Attr(Pull pull, Function function, Irq_trigger irq_trigger,
+		     bool out_on_demand, bool default_state)
+		:
+			pull(pull), function(function), irq_trigger(irq_trigger),
+			out_on_demand(out_on_demand), default_state(default_state)
+		{ }
 };
 
 

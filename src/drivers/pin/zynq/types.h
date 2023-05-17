@@ -49,8 +49,6 @@ struct Pin_driver::Pin_id
 	Bank  bank;
 	Index index;
 
-	Pin_id() = delete;
-
 	static Pin_id from_xml(Xml_node const &node)
 	{
 		Bank  bank  = Bank ::from_xml(node);
@@ -69,8 +67,7 @@ struct Pin_driver::Pin_id
 		if (index_out_of_bounds)
 			error("Pin index of bank ", (unsigned)bank.value, " exceeds maximum (", (unsigned)index.value, ")");
 
-		return { .bank  = bank,
-		         .index = index };
+		return { bank, index };
 	}
 
 	bool operator == (Pin_id const &other) const
@@ -92,6 +89,10 @@ struct Pin_driver::Pin_id
 
 		Genode::print(out, "P", index.value + offset);
 	}
+
+	private:
+
+		Pin_id(Bank bank, Index index) : bank(bank), index(index) { }
 };
 
 #endif /* _TYPES_H_ */
