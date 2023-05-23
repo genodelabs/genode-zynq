@@ -52,22 +52,6 @@ void arm_heavy_mb(void)
 }
 
 
-#include <linux/dma-mapping.h>
-
-int dma_supported(struct device * dev,u64 mask)
-{
-	return 1;
-}
-
-
-#include <linux/sched.h>
-
-void sched_set_fifo(struct task_struct * p)
-{
-	lx_emul_trace(__func__);
-}
-
-
 #include <linux/clk.h>
 
 int clk_set_phase(struct clk * clk,int degrees)
