@@ -10,7 +10,7 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/libc \
                   [depot_user]/src/sequence \
                   [depot_user]/src/vfs \
-                  jschlatow/src/zybo_z720_dma_guard_demo-bitstream/2023-02-22 \
+                  jschlatow/src/zybo_z720_dma_guard_demo-bitstream/2023-05-24 \
                   [depot_user]/raw/[board]-devices
 
 build {
