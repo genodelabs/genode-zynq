@@ -102,10 +102,10 @@ install_config {
 				<policy label="zybo_gpio_demo_sw -> Sw1"  pin="Sw1"/>
 				<policy label="zybo_gpio_demo_sw -> Sw2"  pin="Sw2"/>
 				<policy label="zybo_gpio_demo_sw -> Sw3"  pin="Sw3"/>
-				<policy label="dynamic_drivers -> zybo_gpio_demo_rgb -> Btn0" pin="Btn0"/>
-				<policy label="dynamic_drivers -> zybo_gpio_demo_rgb -> Btn1" pin="Btn1"/>
-				<policy label="dynamic_drivers -> zybo_gpio_demo_rgb -> Btn2" pin="Btn2"/>
-				<policy label="dynamic_drivers -> zybo_gpio_demo_rgb -> Btn3" pin="Btn3"/>
+				<policy label="dynamic -> zybo_gpio_demo_rgb -> Btn0" pin="Btn0"/>
+				<policy label="dynamic -> zybo_gpio_demo_rgb -> Btn1" pin="Btn1"/>
+				<policy label="dynamic -> zybo_gpio_demo_rgb -> Btn2" pin="Btn2"/>
+				<policy label="dynamic -> zybo_gpio_demo_rgb -> Btn3" pin="Btn3"/>
 				<policy label="zybo_gpio_demo_mio -> Btn4" pin="Btn4"/>
 				<policy label="zybo_gpio_demo_mio -> Btn5" pin="Btn5"/>
 				<policy label="zybo_gpio_demo_sw -> Led0" pin="Led0"/>
@@ -164,7 +164,7 @@ install_config {
 				<policy report="platform_drv -> platform_drv -> devices"
 				        label="zynq_driver_manager -> devices"/>
 				<policy report="zynq_driver_manager -> init.config"
-				        label="dynamic_drivers -> config"/>
+				        label="dynamic -> config"/>
 			</config>
 		</start>
 
@@ -216,7 +216,7 @@ install_config {
 			</config>
 		</start>
 
-		<start name="dynamic_drivers" caps="500">
+		<start name="dynamic" caps="500">
 			<binary name="init"/>
 			<resource name="RAM" quantum="5M"/>
 			<route>
