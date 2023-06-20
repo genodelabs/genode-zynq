@@ -169,23 +169,6 @@ void __init net_ns_init(void)
 }
 
 
-#include <linux/random.h>
-
-void get_random_bytes(void * buf,size_t len)
-{
-	lx_emul_trace(__func__);
-}
-
-
-#include <linux/random.h>
-
-bool rng_is_initialized(void)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
 extern void software_node_notify_remove(struct device * dev);
 void software_node_notify_remove(struct device * dev)
 {

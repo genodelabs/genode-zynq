@@ -33,6 +33,7 @@ SRC_C   += lx_emul/shadow/kernel/rcu/tree.c
 SRC_C   += lx_emul/shadow/kernel/smp.c
 SRC_C   += lx_emul/shadow/kernel/locking/spinlock.c
 SRC_C   += lx_emul/shadow/kernel/stop_machine.c
+SRC_C   += lx_emul/shadow/drivers/char/random.c
 SRC_C   += lx_emul/shadow/drivers/clk/clk.c
 SRC_C   += lx_emul/shadow/drivers/clk/clkdev.c
 SRC_C   += lx_emul/shadow/lib/devres.c

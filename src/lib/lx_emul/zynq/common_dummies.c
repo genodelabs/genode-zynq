@@ -122,15 +122,6 @@ int software_node_notify(struct device * dev,unsigned long action)
 
 
 #include <linux/random.h>
-
-int __must_check get_random_bytes_arch(void * buf,int nbytes)
-{
-	lx_emul_trace(__func__);
-	return 0;
-}
-
-
-#include <linux/random.h>
 struct random_ready_callback;
 
 int add_random_ready_callback(struct random_ready_callback * rdy)
