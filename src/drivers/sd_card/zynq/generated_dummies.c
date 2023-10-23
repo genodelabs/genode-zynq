@@ -633,14 +633,6 @@ void * kmalloc_large_node(size_t size,gfp_t flags,int node)
 
 #include <linux/slab.h>
 
-void kmem_cache_destroy(struct kmem_cache * s)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/slab.h>
-
 void kmem_dump_obj(void * object)
 {
 	lx_emul_trace_and_stop(__func__);
