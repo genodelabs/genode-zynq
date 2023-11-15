@@ -1,5 +1,10 @@
 assert_spec arm_v7a
 
+if {![expr [have_board zynq_usrp_e31x] || [have_board zynq_zybo_z7]]} {
+	puts "Test requires board zynq_usrp_e31x or zynq_zybo_z7"
+	exit
+}
+
 create_boot_directory
 import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/init \
@@ -16,7 +21,15 @@ build {
 	app/block_tester
 }
 
-install_config {
+proc write_test {} {
+	if {[get_cmd_switch --autopilot]} {
+		return {<sequential start="0" write="yes" length="256M" size="1M" io_buffer="8M" batch="4"/>}
+	}
+	return ""
+}
+
+set config {}
+append config {
 <config>
 	<parent-provides>
 		<service name="ROM"/>
@@ -76,31 +89,13 @@ install_config {
 		</route>
 	</start>
 
-	<start name="block_tester_read">
+	<start name="block_tester">
 		<binary name="block_tester"/>
 		<resource name="RAM" quantum="64M" />
 		<config verbose="yes" report="no" log="yes" stop_on_error="no">
 			<tests>
-				<sequential length="32M" size="1M" io_buffer="8M" batch="4"/>
-			</tests>
-		</config>
-		<route>
-			<service name="ROM"> <parent/> </service>
-			<service name="PD">  <parent/> </service>
-			<service name="RM">  <parent/> </service>
-			<service name="CPU"> <parent/> </service>
-			<service name="LOG"> <parent/> </service>
-			<service name="Block"> <child name="part_block"/> </service>
-			<any-service> <any-child/> </any-service>
-		</route>
-	</start>
-
-	<start name="block_tester_write">
-		<binary name="block_tester"/>
-		<resource name="RAM" quantum="64M" />
-		<config verbose="yes" report="no" log="yes" stop_on_error="no">
-			<tests>
-				<sequential start="0" write="yes" length="1M" size="1M" io_buffer="8M" batch="4"/>
+				<sequential start="0" length="256M" size="1M" io_buffer="8M" batch="4"/>
+				} [write_test] {
 			</tests>
 		</config>
 		<route>
@@ -120,11 +115,7 @@ install_config {
 		<config io_buffer="1M">
 			<report partitions="yes"/>
 			<policy label_prefix="fs_query" partition="1" writeable="no"/>
-			<policy label_prefix="block_tester_read" partition="2" writeable="no"/>
-			<!-- ONLY UNCOMMENT IF THERE IS A UNUSED 3rd PARTITION FOR WRITING -->
-			<!--
-			<policy label_prefix="block_tester_write" partition="3" writeable="yes"/>
-			-->
+			<policy label_prefix="block_tester" partition="3" writeable="yes"/>
 		</config>
 		<route>
 			<service name="ROM"> <parent/> </service>
@@ -152,8 +143,10 @@ install_config {
 	</start>
 </config> }
 
+install_config $config
+
 build_boot_image { block_tester }
 
-run_genode_until forever
+run_genode_until "--- all tests finished ---" 60
 
 # vi: set ft=tcl :
