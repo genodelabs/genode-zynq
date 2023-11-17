@@ -229,6 +229,6 @@ install_config {
 	</config>
 }
 
-build_boot_image { zybo_gpio_demo_mio zybo_gpio_demo_sw zybo_gpio_demo_rgb }
+build_boot_image [build_artifacts]
 
 run_genode_until forever

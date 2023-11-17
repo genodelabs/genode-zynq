@@ -15,7 +15,7 @@ import_from_depot [depot_user]/src/[base_src] \
 # Config
 #
 
-set config  {
+install_config {
 	<config verbose="yes">
 		<parent-provides>
 			<service name="ROM"/>
@@ -73,8 +73,6 @@ set config  {
 	</config>
 }
 
-install_config $config
-
 #
 # Create platform_drv policy
 #
@@ -104,15 +102,7 @@ puts $devices_manager_config_fd {
 }
 close $devices_manager_config_fd
 
-#
-# Boot modules
-#
-
-# generic modules
-set boot_modules {
-	fpga.bit
-}
-build_boot_image $boot_modules
+build_boot_image [list {*}[build_artifacts] fpga.bit]
 
 append qemu_args " -nographic "
 run_genode_until {<device name="axi-dmac-rx" type="rx_dmac" used="false">} 20

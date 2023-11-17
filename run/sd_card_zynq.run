@@ -28,8 +28,7 @@ proc write_test {} {
 	return ""
 }
 
-set config {}
-append config {
+install_config {
 <config>
 	<parent-provides>
 		<service name="ROM"/>
@@ -143,9 +142,7 @@ append config {
 	</start>
 </config> }
 
-install_config $config
-
-build_boot_image { block_tester }
+build_boot_image [build_artifacts]
 
 run_genode_until "--- all tests finished ---" 60
 

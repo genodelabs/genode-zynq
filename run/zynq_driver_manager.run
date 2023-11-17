@@ -11,17 +11,14 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/vfs \
                   [depot_user]/raw/[board]-devices
 
-set build_components {
-	test/zynq_driver_manager
-}
+build { test/zynq_driver_manager }
 
-build $build_components
 
 #
 # Config
 #
 
-set config  {
+install_config {
 	<config verbose="yes">
 		<parent-provides>
 			<service name="ROM"/>
@@ -105,8 +102,6 @@ set config  {
 	</config>
 }
 
-install_config $config
-
 #
 # Create platform_drv policy
 #
@@ -138,15 +133,7 @@ puts $devices_manager_config_fd {
 }
 close $devices_manager_config_fd
 
-#
-# Boot modules
-#
-
-# generic modules
-set boot_modules {
-	fpga.bit test-zynq_driver_manager
-}
-build_boot_image $boot_modules
+build_boot_image [list {*}[build_artifacts] fpga.bit]
 
 append qemu_args " -nographic "
 run_genode_until {<device name="dummy" type="dummy" used="true">} 20
