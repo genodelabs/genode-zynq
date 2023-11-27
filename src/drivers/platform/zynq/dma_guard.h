@@ -49,17 +49,24 @@ class Driver::Dma_guard : private Attached_mmio,
 
 			public:
 
-				void enable_pci_device(Io_mem_dataspace_capability const, Pci::Bdf const) override { };
-				void disable_pci_device(Io_mem_dataspace_capability const, Pci::Bdf const) override { };
+				void enable_pci_device(Io_mem_dataspace_capability const, Pci::Bdf const &) override { };
+				void disable_pci_device(Pci::Bdf const &) override { };
 
-				void add_range(Range const & range, Dataspace_capability const) override { _dma_guard._add_range(range); }
-				void remove_range(Range const & range) override                          { _dma_guard._remove_range(range); }
+				void add_range(Range const & range, addr_t,
+				               Dataspace_capability const) override {
+					_dma_guard._add_range(range); }
+
+				void remove_range(Range const & range) override {
+					_dma_guard._remove_range(range); }
 
 				Domain(Dma_guard & dma_guard, Allocator & md_alloc, Registry<Dma_buffer> const & buffer_registry)
-				: Driver::Io_mmu::Domain(dma_guard, md_alloc, buffer_registry),
+				: Driver::Io_mmu::Domain(dma_guard, md_alloc),
 				  _dma_guard(dma_guard),
 				  _buffer_registry(buffer_registry)
-				{ }
+				{
+					_buffer_registry.for_each([&] (Dma_buffer const & buf) {
+						add_range({ buf.dma_addr, buf.size }, buf.phys_addr, buf.cap); });
+				}
 
 				~Domain() override
 				{
@@ -114,9 +121,10 @@ class Driver::Dma_guard : private Attached_mmio,
 		 * Iommu interface
 		 */
 
-		bool mpu() override { return true; }
+		bool mpu() const override { return true; }
 
 		Driver::Io_mmu::Domain & create_domain(Allocator & md_alloc,
+		                                       Ram_allocator &,
 		                                       Registry<Dma_buffer> const & buffer_registry,
 		                                       Ram_quota_guard &,
 		                                       Cap_quota_guard &) override
