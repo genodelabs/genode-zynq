@@ -21,14 +21,12 @@
 namespace Driver { struct Slcr; }
 
 
-struct Driver::Slcr : private Attached_mmio
+struct Driver::Slcr : private Attached_mmio<0x904>
 {
 	Genode::Env &_env;
 	Clocks      &_clocks;
 	Resets      &_resets;
 	Clock       &_ps_clk;
-
-	void *_regs() { return local_addr<void>(); }
 
 	struct Unlock : Register<0x8, 32> { };
 
@@ -136,13 +134,12 @@ struct Driver::Slcr : private Attached_mmio
 			struct Fdiv : Bitfield<12, 7> { };
 		};
 
-		Pll(Clocks     &clocks,
-		    Name const &name,
-		    Clock      &parent,
-		    void       *regs,
-		    unsigned    reg_offset)
+		Pll(Clocks               &clocks,
+		    Name const           &name,
+		    Clock                &parent,
+		    Byte_range_ptr const &range)
 		: Clock(clocks, name),
-		  Mmio((addr_t)regs + reg_offset),
+		  Mmio(range),
 		  _parent(parent)
 		{ }
 
@@ -150,9 +147,9 @@ struct Driver::Slcr : private Attached_mmio
 		Rate rate() const override { return Rate { read<Ctrl_reg::Fdiv>() * _parent.rate().value }; }
 	};
 
-	Pll _arm_pll { _clocks, "armpll", _ps_clk, _regs(), 0x100 };
-	Pll _ddr_pll { _clocks, "ddrpll", _ps_clk, _regs(), 0x104 };
-	Pll _io_pll  { _clocks, "iopll",  _ps_clk, _regs(), 0x108 };
+	Pll _arm_pll { _clocks, "armpll", _ps_clk, Mmio::range_at(0x100) };
+	Pll _ddr_pll { _clocks, "ddrpll", _ps_clk, Mmio::range_at(0x104) };
+	Pll _io_pll  { _clocks, "iopll",  _ps_clk, Mmio::range_at(0x108) };
 
 	/*
 	 * CPU clocks
@@ -169,9 +166,9 @@ struct Driver::Slcr : private Attached_mmio
 		};
 
 		Cpu_6or4x(Clocks &clocks,
-		          void   *regs)
+		          Byte_range_ptr const &range)
 		: Clock(clocks, "cpu_6or4x"),
-		  Mmio((addr_t)regs),
+		  Mmio(range),
 		  _clocks(clocks)
 		{ }
 
@@ -200,7 +197,7 @@ struct Driver::Slcr : private Attached_mmio
 		void rate(Rate)   override { Genode::warning("CPU clock rate setting ignored"); }
 		Rate rate() const override { return Rate { _parent_rate().value / Genode::max(1U, read<Reg::Divisor>()) }; }
 
-	} _cpu_6or4x { _clocks, _regs() };
+	} _cpu_6or4x { _clocks, Mmio::range() };
 
 	Fixed_divider _cpu_1x    { _clocks, "cpu_1x",    _cpu_6or4x, _cpu_1x_div };
 	Fixed_divider _cpu_2x    { _clocks, "cpu_2x",    _cpu_6or4x, _cpu_1x_div / 2 };
@@ -234,7 +231,7 @@ struct Driver::Slcr : private Attached_mmio
 	 * DDR clocks
 	 */
 
-	struct Ddr_2x : Clock, private Mmio
+	struct Ddr_2x : Clock, private Mmio<0x128>
 	{
 		Clock &_parent;
 
@@ -245,15 +242,15 @@ struct Driver::Slcr : private Attached_mmio
 
 		Ddr_2x(Clocks &clocks,
 		       Clock  &parent,
-		       void   *regs)
+		       Byte_range_ptr const &range)
 		: Clock(clocks, "ddr2x"),
-		  Mmio((addr_t)regs),
+		  Mmio(range),
 		  _parent(parent)
 		{ }
 
 		void rate(Rate)   override { Genode::warning("DDR clock rate setting ignored"); }
 		Rate rate() const override { return Rate { _parent.rate().value / Genode::max(1U, read<Reg::Divisor_2x>()) }; }
-	} _ddr_2x { _clocks, _ddr_pll, _regs() };
+	} _ddr_2x { _clocks, _ddr_pll, Mmio::range() };
 
 
 	struct Ddr_3x : Clock, private Mmio
@@ -267,22 +264,22 @@ struct Driver::Slcr : private Attached_mmio
 
 		Ddr_3x(Clocks &clocks,
 		       Clock  &parent,
-		       void   *regs)
+		       Byte_range_ptr const &range)
 		: Clock(clocks, "ddr3x"),
-		  Mmio((addr_t)regs),
+		  Mmio(range),
 		  _parent(parent)
 		{ }
 
 		void rate(Rate)   override { Genode::warning("DDR clock rate setting ignored"); }
 		Rate rate() const override { return Rate { _parent.rate().value / Genode::max(1U, read<Reg::Divisor_3x>()) }; }
-	} _ddr_3x { _clocks, _ddr_pll, _regs() };
+	} _ddr_3x { _clocks, _ddr_pll, Mmio::range() };
 
 
 	/*
 	 * Peripheral clocks
 	 */
 
-	struct Io_clk : Clock, protected Mmio
+	struct Io_clk : Clock, protected Mmio<0x4>
 	{
 		Clocks &_clocks;
 
@@ -294,10 +291,9 @@ struct Driver::Slcr : private Attached_mmio
 
 		Io_clk(Clocks     &clocks,
 		       Name const &name,
-		       void       *regs,
-		       unsigned    reg_offset)
+		       Byte_range_ptr const &range)
 		: Clock(clocks, name),
-		  Mmio((addr_t)regs + reg_offset),
+		  Mmio(range),
 		  _clocks(clocks)
 		{ }
 
@@ -327,17 +323,17 @@ struct Driver::Slcr : private Attached_mmio
 		Rate rate() const override { return Rate { _parent_rate().value / Genode::max(1U, read<Reg::Divisor0>()) }; }
 	};
 
-	Io_clk _sdio0_clk { _clocks, "sdio0", _regs(), 0x150 };
-	Io_clk _sdio1_clk { _clocks, "sdio1", _regs(), 0x150 };
+	Io_clk _sdio0_clk { _clocks, "sdio0", Mmio::range_at(0x150) };
+	Io_clk _sdio1_clk { _clocks, "sdio1", Mmio::range_at(0x150) };
 
-	Io_clk _uart0_clk { _clocks, "uart0", _regs(), 0x154 };
-	Io_clk _uart1_clk { _clocks, "uart1", _regs(), 0x154 };
+	Io_clk _uart0_clk { _clocks, "uart0", Mmio::range_at(0x154) };
+	Io_clk _uart1_clk { _clocks, "uart1", Mmio::range_at(0x154) };
 
-	Io_clk _spi0_clk  { _clocks, "spi0",  _regs(), 0x158 };
-	Io_clk _spi1_clk  { _clocks, "spi1",  _regs(), 0x158 };
+	Io_clk _spi0_clk  { _clocks, "spi0",  Mmio::range_at(0x158) };
+	Io_clk _spi1_clk  { _clocks, "spi1",  Mmio::range_at(0x158) };
 
-	Io_clk _smc_clk   { _clocks, "smc",   _regs(), 0x148 };
-	Io_clk _lqspi_clk { _clocks, "lqspi", _regs(), 0x14C };
+	Io_clk _smc_clk   { _clocks, "smc",   Mmio::range_at(0x148) };
+	Io_clk _lqspi_clk { _clocks, "lqspi", Mmio::range_at(0x14C) };
 
 
 	struct Gem_clk : Io_clk
@@ -349,16 +345,15 @@ struct Driver::Slcr : private Attached_mmio
 
 		Gem_clk(Clocks     &clocks,
 		        Name const &name,
-		        void       *regs,
-		        unsigned    reg_offset)
-		: Io_clk(clocks, name, regs, reg_offset)
+		        Byte_range_ptr const &range)
+		: Io_clk(clocks, name, range)
 		{ }
 
 		Rate rate() const override { return Rate { Io_clk::rate().value / Genode::max(1U, read<Reg::Divisor1>()) }; }
 	};
 
-	Gem_clk _gem0_clk { _clocks, "gem0", _regs(), 0x140 };
-	Gem_clk _gem1_clk { _clocks, "gem1", _regs(), 0x144 };
+	Gem_clk _gem0_clk { _clocks, "gem0", Mmio::range_at(0x140) };
+	Gem_clk _gem1_clk { _clocks, "gem1", Mmio::range_at(0x144) };
 
 
 	struct Can_clk : Io_clk
@@ -370,16 +365,15 @@ struct Driver::Slcr : private Attached_mmio
 
 		Can_clk(Clocks     &clocks,
 		        Name const &name,
-		        void       *regs,
-		        unsigned    reg_offset)
-		: Io_clk(clocks, name, regs, reg_offset)
+		        Byte_range_ptr const &range)
+		: Io_clk(clocks, name, range)
 		{ }
 
 		Rate rate() const override { return Rate { Io_clk::rate().value / Genode::max(1U, read<Reg::Divisor1>()) }; }
 	};
 
-	Can_clk _can0_clk { _clocks, "can0", _regs(), 0x15C };
-	Can_clk _can1_clk { _clocks, "can1", _regs(), 0x15C };
+	Can_clk _can0_clk { _clocks, "can0", Mmio::range_at(0x15C) };
+	Can_clk _can1_clk { _clocks, "can1", Mmio::range_at(0x15C) };
 
 
 	struct Fpga_clk : Io_clk
@@ -391,9 +385,8 @@ struct Driver::Slcr : private Attached_mmio
 
 		Fpga_clk(Clocks     &clocks,
 		         Name const &name,
-		         void       *regs,
-		         unsigned    reg_offset)
-		: Io_clk(clocks, name, regs, reg_offset)
+		         Byte_range_ptr const &range)
+		: Io_clk(clocks, name, range)
 		{ }
 
 		static unsigned _find_divisor(unsigned target_div) {
@@ -434,10 +427,10 @@ struct Driver::Slcr : private Attached_mmio
 		Rate rate() const override { return Rate { Io_clk::rate().value / Genode::max(1U, read<Reg::Divisor1>()) }; }
 	};
 
-	Fpga_clk _fpga0_clk { _clocks, "fpga0", _regs(), 0x170 };
-	Fpga_clk _fpga1_clk { _clocks, "fpga1", _regs(), 0x180 };
-	Fpga_clk _fpga2_clk { _clocks, "fpga2", _regs(), 0x190 };
-	Fpga_clk _fpga3_clk { _clocks, "fpga3", _regs(), 0x1a0 };
+	Fpga_clk _fpga0_clk { _clocks, "fpga0", Mmio::range_at(0x170) };
+	Fpga_clk _fpga1_clk { _clocks, "fpga1", Mmio::range_at(0x180) };
+	Fpga_clk _fpga2_clk { _clocks, "fpga2", Mmio::range_at(0x190) };
+	Fpga_clk _fpga3_clk { _clocks, "fpga3", Mmio::range_at(0x1a0) };
 
 	Reset_switch<Fpga_reset, Fpga_reset::Fpga0> _fpga0_rst { *this, "fpga0", 0, 1 };
 	Reset_switch<Fpga_reset, Fpga_reset::Fpga1> _fpga1_rst { *this, "fpga1", 0, 1 };
@@ -448,7 +441,7 @@ struct Driver::Slcr : private Attached_mmio
 
 	Slcr(Genode::Env &env, Clocks &clocks, Resets &resets, Clock &ps_clk)
 	:
-		Attached_mmio(env, 0xf8000000, 0x1000),
+		Attached_mmio(env, {(char *)0xf8000000, 0x1000}),
 		_env(env), _clocks(clocks), _resets(resets), _ps_clk(ps_clk)
 	{
 		/* unlock write access to clock registers */

@@ -76,7 +76,7 @@ class Xilinx::Axidma
 		Mode                  _mode;
 
 		/* device has a single I/O mem */
-		Device::Mmio          _mmio   { _device };
+		Device::Mmio<0>       _mmio   { _device };
 
 		XAxiDma               _xaxidma { };
 

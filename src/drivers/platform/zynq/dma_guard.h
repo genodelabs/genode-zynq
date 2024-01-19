@@ -34,7 +34,7 @@ namespace Driver {
 }
 
 
-class Driver::Dma_guard : private Attached_mmio,
+class Driver::Dma_guard : private Attached_mmio<0x4 + 10 * 4>,
                           public  Driver::Io_mmu
 {
 	public:
@@ -137,7 +137,7 @@ class Driver::Dma_guard : private Attached_mmio,
 		          Io_mmu_devices           & io_mmu_devices,
 		          Device::Name       const & name,
 		          Device::Io_mem::Range      range)
-		: Attached_mmio(env, range.start, range.size),
+		: Attached_mmio(env, {(char *)range.start, range.size}),
 		  Io_mmu(io_mmu_devices, name)
 		{ };
 

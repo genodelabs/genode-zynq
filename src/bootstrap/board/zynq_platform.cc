@@ -37,11 +37,11 @@ bool Cpu::errata(Board::Cpu::Errata) { return false; }
 
 void Cpu::wake_up_all_cpus(void* ip)
 {
-	struct Wakeup_generator : Genode::Mmio
+	struct Wakeup_generator : Genode::Mmio<0x4>
 	{
 		struct Core1_boot_addr : Register<0x0, 32> { };
 
-		Wakeup_generator(void * const ip) : Mmio(CORE1_ENTRY)
+		Wakeup_generator(void * const ip) : Mmio({(char *)CORE1_ENTRY, Mmio::SIZE})
 		{
 			write<Core1_boot_addr>((Genode::addr_t)ip);
 		}

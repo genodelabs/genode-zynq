@@ -29,7 +29,7 @@ namespace Fpga {
 }
 
 
-struct Fpga::Devcfg : Device::Mmio
+struct Fpga::Devcfg : Device::Mmio<0x84>
 {
 	struct Ctrl : Register<0x0, 32>
 	{
@@ -110,7 +110,7 @@ struct Fpga::Devcfg : Device::Mmio
 	};
 
 	Devcfg(Device & device)
-	: Device::Mmio(device)
+	: Device::Mmio<SIZE>(device)
 	{ }
 };
 

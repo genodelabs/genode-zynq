@@ -31,7 +31,7 @@ namespace Cadence_gem
 
 class Cadence_gem::Device
 :
-	protected Platform::Device::Mmio,
+	protected Platform::Device::Mmio<0x1b4>,
 	public Phyio
 {
 	private:
@@ -419,7 +419,7 @@ class Cadence_gem::Device
 		Device(Genode::Env      &env,
 		       Platform::Device &device)
 		:
-			Platform::Device::Mmio(device),
+			Platform::Device::Mmio<SIZE>(device),
 			_timer(env),
 			_irq(device),
 			_phy(*this)

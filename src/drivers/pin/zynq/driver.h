@@ -18,14 +18,14 @@ namespace Pin_driver { struct Driver; }
 
 struct Pin_driver::Driver
 {
-	Platform::Device::Mmio _mmio;
+	Platform::Device::Mmio<0> _mmio;
 
 	/**
 	 * Data registeres are offset 0x4 per bank
 	 */
-	struct Io_bank_data : Genode::Mmio
+	struct Io_bank_data : Genode::Mmio<0x64>
 	{
-		using Genode::Mmio::Mmio;
+		using Mmio::Mmio;
 
 		struct Out   : Register_array<0x040, 32, 32, 1> { };
 		struct In    : Register_array<0x060, 32, 32, 1> { };
@@ -44,9 +44,9 @@ struct Pin_driver::Driver
 	/**
 	 * Control registers are offset 0x40 per bank
 	 */
-	struct Io_bank_ctrl : Genode::Mmio
+	struct Io_bank_ctrl : Genode::Mmio<0x228>
 	{
-		using Genode::Mmio::Mmio;
+		using Mmio::Mmio;
 
 		struct Dir     : Register_array<0x204, 32, 32, 1> { };
 		struct Outen   : Register_array<0x208, 32, 32, 1> { };
@@ -129,8 +129,6 @@ struct Pin_driver::Driver
 		}
 	};
 
-	addr_t const _base { (addr_t)  _mmio.local_addr<void>() };
-
 	Constructible<Io_bank_data> _io_banks_data [Bank::NUM];
 	Constructible<Io_bank_ctrl> _io_banks_ctrl [Bank::NUM];
 
@@ -141,8 +139,8 @@ struct Pin_driver::Driver
 
 		for (unsigned i = Bank::BANK0; i < Bank::NUM; i++) {
 			Bank const bank { Bank::Value(i) };
-			_io_banks_data[i].construct(_base + bank.value*0x4);
-			_io_banks_ctrl[i].construct(_base + bank.value*0x40);
+			_io_banks_data[i].construct(_mmio.range_at(bank.value*0x4));
+			_io_banks_ctrl[i].construct(_mmio.range_at(bank.value*0x40));
 		}
 	}
 

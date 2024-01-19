@@ -22,7 +22,7 @@ namespace Genode { class Xilinx_uart; }
 /**
  * Base driver Xilinx UART PS module
  */
-class Genode::Xilinx_uart: public Mmio
+class Genode::Xilinx_uart: public Mmio<0x38>
 {
 	protected:
 
@@ -88,7 +88,7 @@ class Genode::Xilinx_uart: public Mmio
 		 * \param  baud_rate  targeted baud rate
 		 */
 		Xilinx_uart(addr_t const base, unsigned long const clock,
-		            unsigned long const baud_rate) : Mmio(base)
+		            unsigned long const baud_rate) : Mmio({(char *)base, Mmio::SIZE})
 		{
 			/* reset UART */
 			Uart_cr::access_t uart_cr = 0;

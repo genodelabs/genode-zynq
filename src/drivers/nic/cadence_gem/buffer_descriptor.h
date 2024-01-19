@@ -27,11 +27,8 @@ namespace Cadence_gem {
 }
 
 
-class Cadence_gem::Buffer_descriptor : protected Platform::Dma_buffer, protected Mmio
+class Cadence_gem::Buffer_descriptor : protected Platform::Dma_buffer, protected Mmio<0x8>
 {
-	public:
-		static const size_t BUFFER_DESC_SIZE = 0x08;
-
 	private:
 		size_t _buffer_count;
 		size_t _head_idx { 0 };
@@ -108,8 +105,8 @@ class Cadence_gem::Buffer_descriptor : protected Platform::Dma_buffer, protected
 		 */
 		Buffer_descriptor(Platform::Connection &platform, const size_t buffer_count = 1)
 		:
-			Platform::Dma_buffer(platform, BUFFER_DESC_SIZE * buffer_count, UNCACHED),
-			Genode::Mmio( reinterpret_cast<addr_t>(local_addr<void>()) ),
+			Platform::Dma_buffer(platform, Mmio::SIZE * buffer_count, UNCACHED),
+			Mmio( {Dma_buffer::local_addr<char>(), Dma_buffer::size()} ),
 			_buffer_count(buffer_count),
 			_descriptors(local_addr<descriptor_t>())
 		{ }

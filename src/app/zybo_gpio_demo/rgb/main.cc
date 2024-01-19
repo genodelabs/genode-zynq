@@ -62,11 +62,11 @@ struct Demo::Color_cycle
 };
 
 
-class Demo::Rgb_leds : public Platform::Device::Mmio
+class Demo::Rgb_leds : public Platform::Device::Mmio<0>
 {
 	private:
 
-		struct Led : Genode::Mmio
+		struct Led : Genode::Mmio<0x8>
 		{
 			struct Color      : Register<0x0, 32> { };
 			struct Brightness : Register<0x4, 32> { };
@@ -80,13 +80,13 @@ class Demo::Rgb_leds : public Platform::Device::Mmio
 			using Mmio::Mmio;
 		};
 
-		Led led0 { (addr_t)local_addr<void>() };
-		Led led1 { (addr_t)local_addr<void>() + 0x8 };
+		Led led0 { Mmio::range_at(0x0) };
+		Led led1 { Mmio::range_at(0x8) };
 
 	public:
 
 		Rgb_leds(Platform::Device &device)
-		: Platform::Device::Mmio(device)
+		: Platform::Device::Mmio<SIZE>(device)
 		{ }
 
 		void led0_color(uint32_t c) {
