@@ -14,7 +14,7 @@ length of the bitstream in case a RAW bitstream format without size information
 is used. Note that the FPGA is reprogrammed only if the name of the bitstream
 changed. If the configuration is incomplete, the driver will reset the FPGA.
 
-The state of the FPGA is reported by the fpga_drv as follows:
+The state of the FPGA is reported by the fpga driver as follows:
 
 ! <state>
 !   <bitstream name="fpga.bit" loaded="yes"/>

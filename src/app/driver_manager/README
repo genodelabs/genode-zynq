@@ -18,8 +18,8 @@ report with the provided name and the content of the '<driver>' node.
 An examplary configuration of the component is shown below:
 
 ! <config>
-!   <driver name="nic_drv" device="zynq_gem0">
-!     <binary name="zynq_nic_drv"/>
+!   <driver name="nic" device="zynq_gem0">
+!     <binary name="zynq_nic"/>
 !     [...]
 !   </driver>
 ! </config>

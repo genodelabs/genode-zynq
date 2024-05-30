@@ -13,7 +13,7 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/rom_filter \
                   [depot_user]/src/vfs \
                   [depot_user]/raw/zybo_gpio_demo \
-                  [depot_user]/src/zynq_pin_drv \
+                  [depot_user]/src/zynq_pin \
                   jschlatow/src/zybo_z720_rgb-bitstream/2022-09-29 \
                   jschlatow/src/zybo_z720_gpio-bitstream/2022-09-27 \
                   [depot_user]/raw/[board]-devices
@@ -56,7 +56,7 @@ install_config {
 			</config>
 		</start>
 
-		<start name="platform_drv" caps="1000" managing_system="yes">
+		<start name="platform" caps="1000" managing_system="yes">
 			<binary name="init"/>
 			<resource name="RAM" quantum="24M"/>
 			<provides> <service name="Platform"/> </provides>
@@ -66,7 +66,7 @@ install_config {
 			</route>
 		</start>
 
-		<start name="zynq_pin_drv">
+		<start name="zynq_pin">
 			<resource name="RAM" quantum="1M"/>
 			<provides>
 				<service name="Pin_state"/>
@@ -78,7 +78,7 @@ install_config {
 				<service name="CPU"> <parent/> </service>
 				<service name="PD">  <parent/> </service>
 				<service name="LOG"> <parent/> </service>
-				<service name="Platform"> <child name="platform_drv"/> </service>
+				<service name="Platform"> <child name="platform"/> </service>
 			</route>
 			<config>
 				<in  name="Sw0"  bank="2" index="0" irq="edges"/>
@@ -119,9 +119,9 @@ install_config {
 		<start name="zybo_gpio_demo_mio">
 			<resource name="RAM" quantum="1M"/>
 			<route>
-				<service name="Pin_control"> <child name="zynq_pin_drv"/> </service>
-				<service name="Pin_state">   <child name="zynq_pin_drv"/> </service>
-				<service name="IRQ">         <child name="zynq_pin_drv"/> </service>
+				<service name="Pin_control"> <child name="zynq_pin"/> </service>
+				<service name="Pin_state">   <child name="zynq_pin"/> </service>
+				<service name="IRQ">         <child name="zynq_pin"/> </service>
 				<service name="Report">      <child name="report_rom"/>   </service>
 				<service name="ROM"> <parent/> </service>
 				<service name="CPU"> <parent/> </service>
@@ -134,9 +134,9 @@ install_config {
 		<start name="zybo_gpio_demo_sw">
 			<resource name="RAM" quantum="1M"/>
 			<route>
-				<service name="Pin_control"> <child name="zynq_pin_drv"/> </service>
-				<service name="Pin_state">   <child name="zynq_pin_drv"/> </service>
-				<service name="IRQ">         <child name="zynq_pin_drv"/> </service>
+				<service name="Pin_control"> <child name="zynq_pin"/> </service>
+				<service name="Pin_state">   <child name="zynq_pin"/> </service>
+				<service name="IRQ">         <child name="zynq_pin"/> </service>
 				<service name="Report">      <child name="report_rom"/> </service>
 				<service name="ROM"> <parent/> </service>
 				<service name="CPU"> <parent/> </service>
@@ -161,7 +161,7 @@ install_config {
 			<config verbose="no">
 				<policy label="rom_filter -> state"
 				        report="zybo_gpio_demo_mio -> state"/>
-				<policy report="platform_drv -> platform_drv -> devices"
+				<policy report="platform -> platform -> devices"
 				        label="zynq_driver_manager -> devices"/>
 				<policy report="zynq_driver_manager -> init.config"
 				        label="dynamic -> config"/>
@@ -221,7 +221,7 @@ install_config {
 			<resource name="RAM" quantum="5M"/>
 			<route>
 				<service name="ROM" label="config"> <child name="report_rom"/> </service>
-				<service name="IRQ"> <child name="zynq_pin_drv"/> </service>
+				<service name="IRQ"> <child name="zynq_pin"/> </service>
 				<any-service> <parent/> <any-child/> </any-service>
 			</route>
 		</start>

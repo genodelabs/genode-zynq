@@ -1,6 +1,6 @@
 <config>
 	<report devices="yes"/>
-	<policy label="zynq_pin_drv -> ">
+	<policy label="zynq_pin -> ">
 		<device name="gpio0"/>
 	</policy>
 	<policy label="dynamic -> zybo_gpio_demo_rgb -> ">

@@ -1,4 +1,4 @@
-The zynq_gpio_drv component provides pin-state, pin-control, and IRQ session
+The zynq_pin component provides pin-state, pin-control, and IRQ session
 interfaces for accessing the pins of the GPIO device of the Zynq-7000 SoC.
 
 Its configuration consists of two parts, pin declarations and policies. Pin

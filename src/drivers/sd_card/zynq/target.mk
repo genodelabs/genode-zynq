@@ -1,5 +1,5 @@
 DRIVER := zynq_sd_card
-TARGET := $(DRIVER)_drv
+TARGET := $(DRIVER)
 
 REQUIRES := arm_v7a
 LIBS = base zynq_lx_emul jitterentropy

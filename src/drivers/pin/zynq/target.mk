@@ -1,4 +1,4 @@
-TARGET  := zynq_pin_drv
+TARGET  := zynq_pin
 SRC_CC  := main.cc
 INC_DIR += $(PRG_DIR)
 INC_DIR += $(REP_DIR)/src/drivers/pin/include

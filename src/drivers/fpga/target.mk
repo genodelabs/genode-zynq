@@ -1,4 +1,4 @@
-TARGET   = fpga_drv
+TARGET   = fpga
 SRC_CC   = main.cc
 LIBS     = base
 

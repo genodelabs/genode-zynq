@@ -51,7 +51,7 @@ install_config {
 			</config>
 		</start>
 
-		<start name="platform_drv" caps="1000" managing_system="yes">
+		<start name="platform" caps="1000" managing_system="yes">
 			<binary name="init"/>
 			<resource name="RAM" quantum="24M"/>
 			<provides> <service name="Platform"/> </provides>
@@ -74,7 +74,7 @@ install_config {
 }
 
 #
-# Create platform_drv policy
+# Create platform policy
 #
 set policy_fd [open [run_dir]/genode/policy w]
 puts $policy_fd {

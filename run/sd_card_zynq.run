@@ -12,8 +12,8 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/fs_query \
                   [depot_user]/src/vfs \
                   [depot_user]/src/part_block \
-                  [depot_user]/src/zynq_platform_drv \
-                  [depot_user]/src/zynq_sd_card_drv \
+                  [depot_user]/src/zynq_platform \
+                  [depot_user]/src/zynq_sd_card \
                   [depot_user]/raw/[board]-devices \
                   [depot_user]/src/rump
 
@@ -41,11 +41,11 @@ install_config {
 	</parent-provides>
 	<default caps="100"/>
 
-	<start name="zynq_platform_drv" managing_system="yes">
+	<start name="zynq_platform" managing_system="yes">
 		<resource name="RAM" quantum="1M"/>
 		<provides><service name="Platform"/></provides>
 		<config>
-			<policy label="sd_card_drv -> " info="yes">
+			<policy label="sd_card -> " info="yes">
 				<device name="sdhci0"/>
 			</policy>
 		</config>
@@ -68,8 +68,8 @@ install_config {
 		<route> <any-service> <parent/> </any-service> </route>
 	</start>
 
-	<start name="sd_card_drv" caps="300">
-		<binary name="zynq_sd_card_drv"/>
+	<start name="sd_card" caps="300">
+		<binary name="zynq_sd_card"/>
 		<resource name="RAM" quantum="16M"/>
 		<provides><service name="Block"/></provides>
 		<config report="yes">
@@ -122,7 +122,7 @@ install_config {
 			<service name="RM">  <parent/> </service>
 			<service name="CPU"> <parent/> </service>
 			<service name="LOG"> <parent/> </service>
-			<service name="Block"> <child name="sd_card_drv"/> </service>
+			<service name="Block"> <child name="sd_card"/> </service>
 			<any-service> <any-child/> </any-service>
 		</route>
 	</start>

@@ -1,4 +1,4 @@
-_/src/zynq_platform_drv
-_/src/zynq_nic_drv
+_/src/zynq_platform
+_/src/zynq_nic
 _/raw/drivers_nic-zynq
 _/raw/zynq_qemu-devices

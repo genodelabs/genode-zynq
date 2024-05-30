@@ -13,7 +13,7 @@
 		<rom label="rom_filter"/>
 		<rom label="devices_manager"/>
 		<rom label="report_rom"/>
-		<rom label="fpga_drv"/>
+		<rom label="fpga"/>
 		<rom label="fs_rom"/>
 		<rom label="devices"/>
 		<rom label="drivers.config"/>

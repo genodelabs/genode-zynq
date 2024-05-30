@@ -52,7 +52,7 @@ install_config {
 			</config>
 		</start>
 
-		<start name="platform_drv" caps="1000" managing_system="yes">
+		<start name="platform" caps="1000" managing_system="yes">
 			<binary name="init"/>
 			<resource name="RAM" quantum="24M"/>
 			<provides> <service name="Platform"/> </provides>
@@ -69,7 +69,7 @@ install_config {
 				<service name="ROM"/>
 			</provides>
 			<config verbose="yes">
-				<policy report="platform_drv -> platform_drv -> devices"
+				<policy report="platform -> platform -> devices"
 				        label="zynq_driver_manager -> devices"/>
 				<policy report="zynq_driver_manager -> init.config"
 				        label="dynamic_drivers -> config"/>
@@ -92,7 +92,7 @@ install_config {
 				<any-service> <parent/> <any-child/> </any-service>
 			</route>
 			<config>
-				<driver name="dummy_drv" device="dummy">
+				<driver name="dummy_driver" device="dummy">
 					<binary name="test-zynq_driver_manager"/>
 					<resource name="RAM" quantum="2M"/>
 				</driver>
@@ -103,13 +103,13 @@ install_config {
 }
 
 #
-# Create platform_drv policy
+# Create platform policy
 #
 set policy_fd [open [run_dir]/genode/policy w]
 puts $policy_fd {
 	<config>
 		<report devices="yes"/>
-		<policy label="dynamic_drivers -> dummy_drv -> ">
+		<policy label="dynamic_drivers -> dummy_driver -> ">
 			<device name="dummy"/>
 		</policy>
 	</config>

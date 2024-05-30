@@ -57,7 +57,7 @@ install_config {
 			</config>
 		</start>
 
-		<start name="platform_drv" caps="1000" managing_system="yes">
+		<start name="platform" caps="1000" managing_system="yes">
 			<binary name="init"/>
 			<resource name="RAM" quantum="24M"/>
 			<provides> <service name="Platform"/> </provides>
@@ -82,7 +82,7 @@ install_config {
 				</start>
 			</config>
 			<route>
-				<service name="Platform"> <child name="platform_drv"/> </service>
+				<service name="Platform"> <child name="platform"/> </service>
 				<service name="Timer">    <child name="timer"/> </service>
 				<any-service> <parent/> </any-service>
 			</route>
@@ -92,7 +92,7 @@ install_config {
 }
 
 #
-# Create platform_drv policy
+# Create platform policy
 #
 set policy_fd [open [run_dir]/genode/policy w]
 puts $policy_fd {
