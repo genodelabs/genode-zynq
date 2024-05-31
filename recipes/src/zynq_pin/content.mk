@@ -1,8 +1,8 @@
-SRC_DIR = src/drivers/pin/zynq src/drivers/pin/include
+SRC_DIR = src/driver/pin/zynq src/driver/pin/include
 include $(GENODE_DIR)/repos/base/recipes/src/content.inc
 
-content: src/drivers/pin/main.cc
+content: src/driver/pin/main.cc
 
-src/drivers/pin/main.cc:
+src/driver/pin/main.cc:
 	mkdir -p $(dir $@)
 	cp $(REP_DIR)/$@ $(dir $@)

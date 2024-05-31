@@ -1,4 +1,4 @@
-MIRRORED_FROM_REP_DIR := src/drivers/sd_card/zynq
+MIRRORED_FROM_REP_DIR := src/driver/sd_card/zynq
 
 content: $(MIRRORED_FROM_REP_DIR)
 $(MIRRORED_FROM_REP_DIR):

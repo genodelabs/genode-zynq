@@ -1,2 +1,2 @@
-SRC_DIR = src/drivers/fpga
+SRC_DIR = src/driver/fpga
 include $(GENODE_DIR)/repos/base/recipes/src/content.inc
