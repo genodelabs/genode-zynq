@@ -15,7 +15,7 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/zynq_platform \
                   [depot_user]/src/zynq_sd_card \
                   [depot_user]/raw/[board]-devices \
-                  [depot_user]/src/rump
+                  [depot_user]/src/vfs_rump
 
 build {
 	app/block_tester
