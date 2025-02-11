@@ -34,15 +34,13 @@ install_config {
 		<default-route>
 			<any-service> <parent/> <any-child/> </any-service>
 		</default-route>
-		<default caps="200"/>
+		<default caps="200" ram="1M"/>
 
 		<start name="timer">
-			<resource name="RAM" quantum="1M"/>
 			<provides><service name="Timer"/></provides>
 		</start>
 
-		<start name="vfs">
-			<resource name="RAM" quantum="8M"/>
+		<start name="vfs" ram="8M">
 			<provides><service name="File_system"/></provides>
 			<config>
 				<vfs>
@@ -57,9 +55,8 @@ install_config {
 			</config>
 		</start>
 
-		<start name="platform" caps="1000" managing_system="yes">
+		<start name="platform" caps="1000" ram="24M" managing_system="yes">
 			<binary name="init"/>
-			<resource name="RAM" quantum="24M"/>
 			<provides> <service name="Platform"/> </provides>
 			<route>
 				<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
@@ -67,17 +64,14 @@ install_config {
 			</route>
 		</start>
 
-		<start name="sequence">
-			<resource name="RAM" quantum="400M"/>
+		<start name="sequence" ram="400M">
 			<config keep_going="yes">
 				<start name="test-dma_guard_hp">
 					<binary name="test-dma_loopback"/>
-					<resource name="RAM" quantum="200M"/>
 					<config cached="no" max_size="32M"/>
 				</start>
 				<start name="test-dma_guard_acp">
 					<binary name="test-dma_loopback"/>
-					<resource name="RAM" quantum="200M"/>
 					<config cached="yes" max_size="32M"/>
 				</start>
 			</config>

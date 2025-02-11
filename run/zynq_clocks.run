@@ -26,14 +26,11 @@ install_config {
 		<default-route>
 			<any-service> <parent/> <any-child/> </any-service>
 		</default-route>
-		<default caps="200"/>
+		<default caps="200" ram="1M"/>
 
-		<start name="test-zynq_clocks">
-			<resource name="RAM" quantum="2M"/>
-		</start>
+		<start name="test-zynq_clocks" ram="2M"/>
 
 		<start name="zynq_platform" caps="100">
-			<resource name="RAM" quantum="1M"/>
 			<provides> <service name="Platform"/> </provides>
 			<route> <any-service> <parent/> </any-service> </route>
 			<config devices_rom="config">

@@ -39,10 +39,9 @@ install_config {
 		<service name="CPU"/>
 		<service name="LOG"/>
 	</parent-provides>
-	<default caps="100"/>
+	<default caps="100" ram="1M"/>
 
 	<start name="zynq_platform" managing_system="yes">
-		<resource name="RAM" quantum="1M"/>
 		<provides><service name="Platform"/></provides>
 		<config>
 			<policy label="sd_card -> " info="yes">
@@ -55,22 +54,19 @@ install_config {
 	</start>
 
 	<start name="timer">
-		<resource name="RAM" quantum="1M"/>
 		<provides><service name="Timer"/></provides>
 		<route> <any-service> <parent/> </any-service> </route>
 	</start>
 
-	<start name="report_rom">
-		<resource name="RAM" quantum="2M"/>
+	<start name="report_rom" ram="2M">
 		<provides> <service name="Report"/> <service name="ROM"/> </provides>
 		<config verbose="yes">
 		</config>
 		<route> <any-service> <parent/> </any-service> </route>
 	</start>
 
-	<start name="sd_card" caps="300">
+	<start name="sd_card" caps="300" ram="16M">
 		<binary name="zynq_sd_card"/>
-		<resource name="RAM" quantum="16M"/>
 		<provides><service name="Block"/></provides>
 		<config report="yes">
 			<default-policy device="mmcblk0"/>
@@ -88,9 +84,8 @@ install_config {
 		</route>
 	</start>
 
-	<start name="block_tester">
+	<start name="block_tester" ram="64M">
 		<binary name="block_tester"/>
-		<resource name="RAM" quantum="64M" />
 		<config verbose="yes" report="no" log="yes" stop_on_error="no">
 			<tests>
 				<sequential start="0" length="256M" size="1M" io_buffer="8M" batch="4"/>
@@ -108,8 +103,7 @@ install_config {
 		</route>
 	</start>
 
-	<start name="part_block">
-		<resource name="RAM" quantum="10M" />
+	<start name="part_block" ram="10M">
 		<provides> <service name="Block"/> </provides>
 		<config io_buffer="1M">
 			<report partitions="yes"/>
@@ -127,8 +121,7 @@ install_config {
 		</route>
 	</start>
 
-	<start name="fs_query" caps="200">
-		<resource name="RAM" quantum="32M"/>
+	<start name="fs_query" caps="200" ram="32M">
 		<config>
 			<vfs>
 				<rump fs="msdos" ram="20M" writeable="no"/>

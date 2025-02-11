@@ -31,16 +31,14 @@ install_config {
 			<service name="IRQ"/>
 		</parent-provides>
 
-		<default caps="200"/>
+		<default caps="200" ram="1M"/>
 
 		<start name="timer">
-			<resource name="RAM" quantum="1M"/>
 			<route> <any-service> <parent/> </any-service> </route>
 			<provides> <service name="Timer"/> </provides>
 		</start>
 
-		<start name="vfs">
-			<resource name="RAM" quantum="8M"/>
+		<start name="vfs" ram="8M">
 			<provides><service name="File_system"/></provides>
 			<route>
 				<service name="ROM" label="fpga.config"> <child name="rom_filter"/> </service>
@@ -56,9 +54,8 @@ install_config {
 			</config>
 		</start>
 
-		<start name="platform" caps="1000" managing_system="yes">
+		<start name="platform" caps="1000" ram="24M" managing_system="yes">
 			<binary name="init"/>
-			<resource name="RAM" quantum="24M"/>
 			<provides> <service name="Platform"/> </provides>
 			<route>
 				<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
@@ -67,7 +64,6 @@ install_config {
 		</start>
 
 		<start name="zynq_pin">
-			<resource name="RAM" quantum="1M"/>
 			<provides>
 				<service name="Pin_state"/>
 				<service name="Pin_control"/>
@@ -117,7 +113,6 @@ install_config {
 		</start>
 
 		<start name="zybo_gpio_demo_mio">
-			<resource name="RAM" quantum="1M"/>
 			<route>
 				<service name="Pin_control"> <child name="zynq_pin"/> </service>
 				<service name="Pin_state">   <child name="zynq_pin"/> </service>
@@ -132,7 +127,6 @@ install_config {
 		</start>
 
 		<start name="zybo_gpio_demo_sw">
-			<resource name="RAM" quantum="1M"/>
 			<route>
 				<service name="Pin_control"> <child name="zynq_pin"/> </service>
 				<service name="Pin_state">   <child name="zynq_pin"/> </service>
@@ -147,7 +141,6 @@ install_config {
 		</start>
 
 		<start name="report_rom">
-			<resource name="RAM" quantum="1M"/>
 			<provides>
 				<service name="ROM"/>
 				<service name="Report"/>
@@ -169,7 +162,6 @@ install_config {
 		</start>
 
 		<start name="rom_filter">
-			<resource name="RAM" quantum="1M"/>
 			<provides>
 				<service name="ROM"/>
 			</provides>
@@ -202,8 +194,7 @@ install_config {
 		</start>
 
 		<!-- automatically start RGB LED component once bitstream has been loaded -->
-		<start name="zynq_driver_manager">
-			<resource name="RAM" quantum="2M"/>
+		<start name="zynq_driver_manager" ram="2M">
 			<route>
 				<service name="ROM" label="devices"> <child name="report_rom"/> </service>
 				<any-service> <parent/> <any-child/> </any-service>
@@ -216,9 +207,8 @@ install_config {
 			</config>
 		</start>
 
-		<start name="dynamic" caps="500">
+		<start name="dynamic" caps="500" ram="5M">
 			<binary name="init"/>
-			<resource name="RAM" quantum="5M"/>
 			<route>
 				<service name="ROM" label="config"> <child name="report_rom"/> </service>
 				<service name="IRQ"> <child name="zynq_pin"/> </service>
