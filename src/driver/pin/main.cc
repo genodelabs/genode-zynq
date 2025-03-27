@@ -267,7 +267,7 @@ void Pin_driver::Main::_handle_config()
 		Genode::destroy(_heap, &pin);
 	};
 
-	auto update = [&] (Pin_declaration &pin, Xml_node node)
+	auto update = [&] (Pin_declaration &pin, Xml_node const &node)
 	{
 		pin.update_from_xml(node, _driver);
 	};

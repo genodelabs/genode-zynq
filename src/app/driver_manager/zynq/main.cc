@@ -17,6 +17,7 @@
 #include <base/heap.h>
 #include <base/attached_rom_dataspace.h>
 #include <os/reporter.h>
+#include <os/buffered_xml.h>
 #include <rm_session/rm_session.h>
 #include <io_mem_session/io_mem_session.h>
 #include <timer_session/timer_session.h>
@@ -39,8 +40,9 @@ struct Driver_manager::User_logic_driver : Registry<User_logic_driver>::Element
 {
 	using Name = String<64>;
 
-	Xml_node driver_xml;
-	bool     start { false };
+	Buffered_xml const driver_xml;
+
+	bool start { false };
 
 	static void _gen_forwarded_service(Xml_generator & xml,
 	                                   Name    const & service,
@@ -60,10 +62,9 @@ struct Driver_manager::User_logic_driver : Registry<User_logic_driver>::Element
 	{
 		if (!start) return;
 
-		Name const name = driver_xml.attribute_value("name", Name());
+		Name const name = driver_xml.xml.attribute_value("name", Name());
 
-		try {
-			Xml_node provides = driver_xml.sub_node("provides");
+		driver_xml.xml.with_optional_sub_node("provides", [&] (Xml_node const &provides) {
 
 			/* generate forward rules for every provided service */
 			provides.for_each_sub_node("service", [&](Xml_node service) {
@@ -71,20 +72,21 @@ struct Driver_manager::User_logic_driver : Registry<User_logic_driver>::Element
 				                       service.attribute_value("name", Name()),
 				                       name);
 			});
-
-		} catch (...) { }
+		});
 
 		/* copy content from driver_xml */
 		xml.node("start", [&] () {
 			xml.attribute("name", name);
-			driver_xml.with_raw_content([&] (char const *start, Genode::size_t length) {
+			driver_xml.xml.with_raw_content([&] (char const *start, Genode::size_t length) {
 				xml.append(start, length); });
 		});
 	}
 
-	User_logic_driver(Registry<User_logic_driver> &registry, Xml_node const &xml)
-	: Registry<User_logic_driver>::Element(registry, *this),
-	  driver_xml(xml)
+	User_logic_driver(Registry<User_logic_driver> &registry,
+	                  Allocator &alloc, Xml_node const &xml)
+	:
+		Registry<User_logic_driver>::Element(registry, *this),
+		driver_xml(alloc, xml)
 	{ }
 };
 
@@ -141,13 +143,13 @@ void Driver_manager::Main::_apply_config()
 	_user_logic_drivers.for_each([&] (User_logic_driver &d) { destroy(_heap, &d); });
 
 	/* fill registry from config */
-	_config.xml().for_each_sub_node("driver", [&] (Xml_node driver) {
+	_config.xml().for_each_sub_node("driver", [&] (Xml_node const &driver) {
 		if (!driver.has_attribute("device"))
 			return;
 		if (!driver.has_attribute("name"))
 			return;
 
-		new (_heap) User_logic_driver(_user_logic_drivers, driver);
+		new (_heap) User_logic_driver(_user_logic_drivers, _heap, driver);
 	});
 }
 
@@ -164,9 +166,9 @@ void Driver_manager::Main::_handle_devices_update()
 	_user_logic_drivers.for_each([&] (User_logic_driver &d) {
 
 		bool found = false;
-		_devices.xml().for_each_sub_node([&] (Xml_node device) {
-			if (device      .attribute_value("type",   User_logic_driver::Name()) ==
-			    d.driver_xml.attribute_value("device", User_logic_driver::Name()))
+		_devices.xml().for_each_sub_node([&] (Xml_node const &device) {
+			if (device          .attribute_value("type",   User_logic_driver::Name()) ==
+			    d.driver_xml.xml.attribute_value("device", User_logic_driver::Name()))
 			{
 				changed = changed || !d.start;
 				d.start = true;
