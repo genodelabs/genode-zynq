@@ -24,6 +24,7 @@
 #include <spec/arm/cortex_a9_global_timer.h>
 #include <spec/arm/cortex_a9_cpu.h>
 #include <hw/spec/arm/pl310.h>
+#include <no_vcpu_board.h>
 
 namespace Board {
 	using namespace Hw::Zynq_qemu_board;
