@@ -7,7 +7,8 @@ LIBS = base zynq_lx_emul jitterentropy
 SRC_CC += main.cc
 SRC_CC += lx_emul/shared_dma_buffer.cc
 SRC_CC += lx_emul/random.cc
-SRC_C  += block.c
+
+SRC_C  += lx_emul/block.c
 
 SRC_CC  += genode_c_api/block.cc
 GENODE_C_API_SRC_DIR := $(call select_from_repositories,src/lib/genode_c_api)
