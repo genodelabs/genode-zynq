@@ -33,6 +33,14 @@ void synchronize_srcu(struct srcu_struct * ssp)
 unsigned long net_rand_noise;
 
 
+#include <linux/percpu.h>
+
+/* kernel/sched/sched.h */
+bool sched_smp_initialized = true;
+
+DEFINE_PER_CPU(unsigned long, cpu_scale);
+
+
 #include <linux/tracepoint-defs.h>
 
 const struct trace_print_flags vmaflag_names[]  = { {0,NULL}};
@@ -170,6 +178,59 @@ void add_device_randomness(const void * buf,size_t len)
 void add_interrupt_randomness(int irq)
 {
 	lx_emul_trace(__func__);
+}
+
+
+/* mm/debug.c */
+const struct trace_print_flags pagetype_names[] = {
+	{0, NULL}
+};
+
+
+struct dl_bw;
+void init_dl_bw(struct dl_bw *dl_b)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+struct irq_work;
+extern void rto_push_irq_work_func(struct irq_work *work);
+void rto_push_irq_work_func(struct irq_work *work)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+/* kernel/sched/cpudeadline.h */
+struct cpudl;
+int  cpudl_init(struct cpudl *cp)
+{
+	lx_emul_trace_and_stop(__func__);
+	return -1;
+}
+
+
+void cpudl_cleanup(struct cpudl *cp)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+/* include/linux/sched/topology.h */
+int arch_asym_cpu_priority(int cpu)
+{
+	lx_emul_trace_and_stop(__func__);
+	return 0;
+}
+
+
+#include <linux/random.h>
+
+int __cold execute_with_initialized_rng(struct notifier_block * nb)
+{
+	lx_emul_trace(__func__);
+	return 0;
 }
 
 

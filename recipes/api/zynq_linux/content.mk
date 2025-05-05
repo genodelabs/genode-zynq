@@ -35,7 +35,7 @@ $(MIRRORED_FROM_REP_DIR):
 # Content from the Linux source tree
 #
 
-PORT_DIR := $(call port_dir,$(GENODE_DIR)/repos/dde_linux/ports/legacy_linux)
+PORT_DIR := $(call port_dir,$(GENODE_DIR)/repos/dde_linux/ports/linux)
 LX_REL_DIR := src/linux
 LX_ABS_DIR := $(addsuffix /$(LX_REL_DIR),$(PORT_DIR))
 
@@ -52,10 +52,10 @@ LX_FILES += Makefile \
             scripts/Makefile.host \
             scripts/Makefile.asm-generic \
             scripts/Makefile.compiler \
+            scripts/Makefile.defconf \
             scripts/config \
             scripts/basic/fixdep.c \
             scripts/cc-version.sh \
-            scripts/check-local-export \
             scripts/ld-version.sh \
             scripts/mkcompile_h \
             scripts/dtc \

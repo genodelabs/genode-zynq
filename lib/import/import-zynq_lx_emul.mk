@@ -8,7 +8,7 @@ SRC_C   += $(notdir $(wildcard $(PRG_DIR)/generated_dummies.c))
 # lx_emul/initcall_order.h
 INC_DIR += $(REP_DIR)/src/include
 
-LX_SRC_DIR := $(call select_from_ports,legacy_linux)/src/linux
+LX_SRC_DIR := $(call select_from_ports,linux)/src/linux
 ifeq ($(wildcard $(LX_SRC_DIR)),)
 LX_SRC_DIR := $(call select_from_repositories,src/linux)
 endif
@@ -38,10 +38,7 @@ SRC_C   += lx_emul/shadow/drivers/clk/clk.c
 SRC_C   += lx_emul/shadow/drivers/clk/clkdev.c
 SRC_C   += lx_emul/shadow/lib/devres.c
 SRC_C   += lx_emul/shadow/lib/smp_processor_id.c
-SRC_C   += lx_emul/shadow/mm/memblock.c
 SRC_C   += lx_emul/shadow/mm/page_alloc.c
-SRC_C   += lx_emul/shadow/mm/slab_common.c
-SRC_C   += lx_emul/shadow/mm/slub.c
 SRC_CC  += lx_kit/device.cc
 SRC_CC  += lx_kit/memory_dma.cc
 

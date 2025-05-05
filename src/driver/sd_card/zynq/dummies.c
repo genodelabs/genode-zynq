@@ -155,7 +155,7 @@ void rand_initialize_disk(struct gendisk * disk)
 
 #include <linux/blkdev.h>
 
-void blkdev_put(struct block_device * bdev,fmode_t mode)
+void blkdev_put(struct block_device * bdev, void * holder)
 {
 	lx_emul_trace(__func__);
 }
@@ -195,6 +195,23 @@ noinstr void ct_irq_exit(void)
 #include <linux/skbuff.h>
 
 void skb_init()
+{
+	lx_emul_trace(__func__);
+}
+
+
+#include <linux/group_cpus.h>
+
+struct cpumask * group_cpus_evenly(unsigned int numgrps)
+{
+	lx_emul_trace(__func__);
+	return NULL;
+}
+
+
+#include <linux/rcutree.h>
+
+void rcu_barrier(void)
 {
 	lx_emul_trace(__func__);
 }
