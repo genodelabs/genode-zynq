@@ -37,11 +37,12 @@ struct Fpga::Managed_bitstream
 	Attached_rom_dataspace    rom;
 	Constructible<Bitstream>  bitstream { };
 	Pcap_loader              &loader;
-	Reporter                 &reporter;
+	Expanding_reporter       &reporter;
 
 	Signal_handler<Managed_bitstream> rom_handler;
 
-	Managed_bitstream(Env &env, Pcap_loader &loader, Reporter &reporter, Name const &name, size_t max_size)
+	Managed_bitstream(Env &env, Pcap_loader &loader, Expanding_reporter &reporter,
+	                  Name const &name, size_t max_size)
 	: max_size(max_size),
 	  name(name),
 	  rom(env, name.string()),
@@ -79,7 +80,7 @@ struct Fpga::Managed_bitstream
 
 	void report(Name const &name, bool loaded)
 	{
-		Reporter::Xml_generator xml(reporter, [&] () {
+		reporter.generate([&] (Xml_generator &xml) {
 			xml.node("bitstream", [&] () {
 				if (name != "")
 					xml.attribute("name", name);
@@ -103,7 +104,7 @@ struct Fpga::Main
 
 	Constructible<Managed_bitstream>   managed_bitstream { };
 
-	Reporter                           reporter          { env, "state" };
+	Expanding_reporter                 reporter          { env, "state" };
 
 	Platform::Connection               platform          { env };
 	Pcap_loader                        loader            { env, platform };
@@ -115,8 +116,6 @@ struct Fpga::Main
 		loader.reset();
 
 		config_rom.sigh(config_handler);
-
-		reporter.enabled(true);
 
 		handle_config();
 

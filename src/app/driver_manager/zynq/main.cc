@@ -191,7 +191,7 @@ void Driver_manager::Main::_handle_devices_update()
 
 void Driver_manager::Main::_generate_init_config(Reporter &init_config) const
 {
-	Reporter::Xml_generator xml(init_config, [&] () {
+	Reporter::Result const result = init_config.generate([&] (Xml_generator &xml) {
 
 		xml.attribute("verbose", false);
 
@@ -228,6 +228,9 @@ void Driver_manager::Main::_generate_init_config(Reporter &init_config) const
 			d.generate_start_node(xml);
 		});
 	});
+
+	if (result == Buffer_error::EXCEEDED)
+		warning("init config report exceeds maximum size");
 }
 
 
