@@ -60,12 +60,12 @@ void Devices_manager::Main::_with_bitstream_devices(Bitstream_name const &name, 
 {
 	bool found = false;
 
-	_config.xml().for_each_sub_node("bitstream", [&] (Xml_node const &node) {
+	_config.node().for_each_sub_node("bitstream", [&] (Node const &node) {
 		if (found) return;
 
 		Bitstream_name cur_name = node.attribute_value("name", Bitstream_name { });
 		if (cur_name == name) {
-			node.with_optional_sub_node("devices", [&] (Xml_node const &devices) {
+			node.with_optional_sub_node("devices", [&] (Node const &devices) {
 				fn(devices);
 			});
 			found = true;
@@ -83,21 +83,20 @@ void Devices_manager::Main::_handle_update()
 	_devices   .update();
 	_fpga_state.update();
 
-	_devices_reporter.generate([&] (Xml_generator &xml) {
-		auto copy_xml_content = [&] (char const *start, size_t len) { xml.append(start, len); };
+	_devices_reporter.generate([&] (Generator &g) {
 
 		/* copy devices rom */
-		_devices.xml().with_raw_content(copy_xml_content);
+		(void)g.append_node(_devices.node(), Generator::Max_depth { 10 });
 
-		if (!_fpga_state.xml().has_type("state")) return;
+		if (!_fpga_state.node().has_type("state")) return;
 
 		/* copy devices of currently loaded bitstream */
-		_fpga_state.xml().with_optional_sub_node("bitstream", [&] (Xml_node const &node) {
+		_fpga_state.node().with_optional_sub_node("bitstream", [&] (Node const &node) {
 			Bitstream_name name = node.attribute_value("name", Bitstream_name { });
 
 			if (node.attribute_value("loaded", false))
-				_with_bitstream_devices(name, [&] (Xml_node const &devices) {
-					devices.with_raw_content(copy_xml_content);
+				_with_bitstream_devices(name, [&] (Node const &devices) {
+					(void)g.append_node_content(devices, Generator::Max_depth { 10 });
 				});
 		});
 	});

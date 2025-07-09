@@ -44,11 +44,8 @@ struct Server::Main
 
 		/* read MAC address from config or take from device as fallback */
 		Nic::Mac_address mac_addr = _device.read_mac_address();
-		try {
-			Genode::Xml_node nic_config = config_rom.xml();
-			mac_addr = nic_config.attribute_value("mac", mac_addr);
-		} catch (...) { }
-		return mac_addr;
+		Node const &config = config_rom.node();
+		return config.attribute_value("mac", mac_addr);
 	}
 
 	Main(Env &env) : _env(env) { }

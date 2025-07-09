@@ -34,11 +34,11 @@ struct Pin_driver::Pin_declaration : List_model<Pin_declaration>::Element
 	/**
 	 * List_model::Element
 	 */
-	static bool type_matches(Xml_node const &node)
+	static bool type_matches(Node const &node)
 	{
-		bool const valid_type = node.has_type("in")
-		                     || node.has_type("out")
-		                     || node.has_type("select");
+		bool const valid_type = node.type() == "in"
+		                     || node.type() == "out"
+		                     || node.type() == "select";
 
 		return valid_type && node.has_attribute("name");
 	}
@@ -46,11 +46,11 @@ struct Pin_driver::Pin_declaration : List_model<Pin_declaration>::Element
 	/**
 	 * List_model::Element
 	 */
-	bool matches(Xml_node const &node) const
+	bool matches(Node const &node) const
 	{
 		return type_matches(node)
-		    && (name == Name::from_xml(node))
-		    && (attr.function.direction() == Function::from_xml(node).direction());
+		    && (name == Name::from_node(node))
+		    && (attr.function.direction() == Function::from_node(node).direction());
 	}
 
 	Constructible<Pin_id> id { };
@@ -59,14 +59,14 @@ struct Pin_driver::Pin_declaration : List_model<Pin_declaration>::Element
 
 	unsigned ref_count = 0;
 
-	Pin_declaration(Xml_node const &node) : name(Name::from_xml(node)) { }
+	Pin_declaration(Node const &node) : name(Name::from_node(node)) { }
 
-	void update_from_xml(Xml_node const &pin, Pin_driver::Driver &driver)
+	void update_from_node(Node const &pin, Pin_driver::Driver &driver)
 	{
 		try {
-			Pin_id const new_id = Pin_id::from_xml(pin);
+			Pin_id const new_id = Pin_id::from_node(pin);
 
-			attr = Attr::from_xml(pin);
+			attr = Attr::from_node(pin);
 
 			/* reset original pin if physical location has changed */
 			bool const id_changed = (id.constructed() && *id != new_id);
@@ -225,8 +225,8 @@ Pin_driver::Pin_id Pin_driver::Main::assigned_pin(Session_label label,
 {
 	Constructible<Pin_id> pin_id { };
 
-	with_matching_policy(label, _config.xml(),
-		[&] (Xml_node const &policy) {
+	with_matching_policy(label, _config.node(),
+		[&] (Node const &policy) {
 			Name const name { policy.attribute_value("pin", Name::String()) };
 			_pins.for_each([&] (Pin_declaration const &pin) {
 				if (pin.name == name && pin.attr.function.direction() == dir)
@@ -251,7 +251,7 @@ void Pin_driver::Main::_handle_config()
 	 * Update pin declarations
 	 */
 
-	auto create = [&] (Xml_node const &node) -> Pin_declaration &
+	auto create = [&] (Node const &node) -> Pin_declaration &
 	{
 		return *new (_heap) Pin_declaration(node);
 	};
@@ -264,12 +264,12 @@ void Pin_driver::Main::_handle_config()
 		Genode::destroy(_heap, &pin);
 	};
 
-	auto update = [&] (Pin_declaration &pin, Xml_node const &node)
+	auto update = [&] (Pin_declaration &pin, Node const &node)
 	{
-		pin.update_from_xml(node, _driver);
+		pin.update_from_node(node, _driver);
 	};
 
-	_pins.update_from_xml(_config.xml(), create, destroy, update);
+	_pins.update_from_node(_config.node(), create, destroy, update);
 
 	/*
 	 * Re-assign sessions to pins

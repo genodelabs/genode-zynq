@@ -23,12 +23,12 @@ XAxiDma_Config Xilinx::Axidma::_config()
 	using Name = String<64>;
 
 	_platform.update();
-	_platform.with_xml([&] (Xml_node & xml) {
-		xml.for_each_sub_node("device", [&] (Xml_node device) {
+	_platform.with_node([&] (Node const &node) {
+		node.for_each_sub_node("device", [&] (Node const &device) {
 			if (device.attribute_value("type", Name { }) != _type.name)
 				return;
 
-			device.for_each_sub_node("property", [&] (Xml_node par) {
+			device.for_each_sub_node("property", [&] (Node const &par) {
 				Name name  = par.attribute_value("name", Name());
 				int  value = par.attribute_value("value", 0);
 

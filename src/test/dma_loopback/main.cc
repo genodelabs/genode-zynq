@@ -35,8 +35,8 @@ struct Main {
 
 	Attached_rom_dataspace config { env, "config" };
 
-	Cache         cache           { cache_from_xml() };
-	size_t        max_buffer_size { config.xml().attribute_value("max_size", Number_of_bytes { 32*1024*1024 }) };
+	Cache         cache           { cache_from_node() };
+	size_t        max_buffer_size { config.node().attribute_value("max_size", Number_of_bytes { 32*1024*1024 }) };
 	size_t        cur_buffer_size { 8*1024 };
 
 	size_t        max_access_size { 64*1024 };
@@ -56,9 +56,9 @@ struct Main {
 	                                               max_buffer_size,
 	                                               cache };
 
-	Cache cache_from_xml()
+	Cache cache_from_node()
 	{
-		bool cached = config.xml().attribute_value("cached", false);
+		bool cached = config.node().attribute_value("cached", false);
 		return cached ? CACHED : UNCACHED;
 	}
 

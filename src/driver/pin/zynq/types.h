@@ -25,7 +25,7 @@ struct Pin_driver::Bank
 
 	class Invalid : Exception { };
 
-	static Bank from_xml(Xml_node const &node)
+	static Bank from_node(Node const &node)
 	{
 		typedef String<2> Name;
 		Name name = node.attribute_value("bank", Name());
@@ -49,10 +49,10 @@ struct Pin_driver::Pin_id
 	Bank  bank;
 	Index index;
 
-	static Pin_id from_xml(Xml_node const &node)
+	static Pin_id from_node(Node const &node)
 	{
-		Bank  bank  = Bank ::from_xml(node);
-		Index index = Index::from_xml(node);
+		Bank  bank  = Bank ::from_node(node);
+		Index index = Index::from_node(node);
 
 		bool index_out_of_bounds = false;
 		if (bank.value == 1 && index.value > 21) {

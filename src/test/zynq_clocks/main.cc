@@ -28,11 +28,11 @@ struct Main
 	{
 		log("--- Zynq Clock Test ---");
 		platform.update();
-		platform.with_xml([&] (Xml_node & xml) {
-			xml.for_each_sub_node("device", [&] (Xml_node & node) {
+		platform.with_node([&] (Node const &node) {
+			node.for_each_sub_node("device", [&] (Node const &node) {
 				log("Device \"", node.attribute_value("name", Name()), "\":");
 
-				node.for_each_sub_node("clock", [&] (Xml_node & node) {
+				node.for_each_sub_node("clock", [&] (Node const &node) {
 					log("  Clock \"", node.attribute_value("name", Name()), "\": \t",
 					                  node.attribute_value("rate", 0U));
 				});

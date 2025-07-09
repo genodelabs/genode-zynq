@@ -38,8 +38,8 @@ struct Demo::Main
 
 	void _update_state(bool on)
 	{
-		_reporter.generate([&] (Genode::Xml_generator & xml) {
-			xml.attribute("value", on ? "yes" : "no");
+		_reporter.generate([&] (Genode::Generator &g) {
+			g.attribute("value", on ? "yes" : "no");
 		});
 
 		_led4.state(on);

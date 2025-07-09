@@ -80,11 +80,11 @@ struct Fpga::Managed_bitstream
 
 	void report(Name const &name, bool loaded)
 	{
-		reporter.generate([&] (Xml_generator &xml) {
-			xml.node("bitstream", [&] () {
+		reporter.generate([&] (Generator &g) {
+			g.node("bitstream", [&] () {
 				if (name != "")
-					xml.attribute("name", name);
-				xml.attribute("loaded", loaded);
+					g.attribute("name", name);
+				g.attribute("loaded", loaded);
 			});
 		});
 	}
@@ -128,10 +128,10 @@ void Fpga::Main::handle_config()
 {
 	config_rom.update();
 
-	config_rom.xml().with_sub_node("bitstream",
-		[&] (Xml_node const &xml) {
-			Managed_bitstream::Name new_name = xml.attribute_value("name", Managed_bitstream::Name(""));
-			size_t                  max_size = xml.attribute_value("size", 0);
+	config_rom.node().with_sub_node("bitstream",
+		[&] (Node const &g) {
+			Managed_bitstream::Name new_name = g.attribute_value("name", Managed_bitstream::Name(""));
+			size_t                  max_size = g.attribute_value("size", 0);
 
 			if (new_name == "")
 				managed_bitstream.destruct();
