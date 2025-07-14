@@ -158,7 +158,8 @@ class Driver::Dma_guard_factory : public Driver::Io_mmu_factory
 		  _env(env)
 		{ }
 
-		void create(Allocator & alloc, Io_mmu_devices & io_mmu_devices, Device const & device) override
+		void create(Allocator & alloc, Io_mmu_devices & io_mmu_devices,
+		            Registry<Irq_controller> const &, Device const & device) override
 		{
 			using Range = Device::Io_mem::Range;
 
