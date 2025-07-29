@@ -35,62 +35,92 @@ $(MIRRORED_FROM_REP_DIR):
 # Content from the Linux source tree
 #
 
-PORT_DIR := $(call port_dir,$(GENODE_DIR)/repos/dde_linux/ports/legacy_linux)
+PORT_DIR := $(call port_dir,$(GENODE_DIR)/repos/dde_linux/ports/linux)
 LX_REL_DIR := src/linux
 LX_ABS_DIR := $(addsuffix /$(LX_REL_DIR),$(PORT_DIR))
 
 # ingredients needed for creating a Linux build directory / generated headers
-LX_FILES += Makefile \
-            Kbuild \
-            scripts/Makefile \
-            scripts/Kbuild.include \
-            scripts/subarch.include \
-            scripts/Makefile.build \
-            scripts/basic/Makefile \
-            scripts/Makefile.extrawarn \
-            scripts/Makefile.lib \
-            scripts/Makefile.host \
-            scripts/Makefile.asm-generic \
-            scripts/Makefile.compiler \
-            scripts/Makefile.defconf \
-            scripts/config \
-            scripts/basic/fixdep.c \
-            scripts/cc-version.sh \
-            scripts/ld-version.sh \
-            scripts/mkcompile_h \
-            scripts/dtc \
-            scripts/kconfig/merge_config.sh \
-            scripts/remove-stale-files \
-            scripts/sorttable.h \
-            scripts/sorttable.c \
-            scripts/setlocalversion \
-            scripts/min-tool-version.sh \
-            scripts/as-version.sh \
-            scripts/mod \
-            scripts/pahole-flags.sh \
-            scripts/pahole-version.sh \
-            scripts/checksyscalls.sh \
-            scripts/syscallhdr.sh \
-            scripts/syscalltbl.sh \
-            tools/include/tools \
+LX_FILES += Kbuild \
+            Makefile \
             arch/arm/Makefile \
-            arch/arm/configs \
-            kernel/configs/tiny.config \
-            kernel/configs/tiny-base.config \
             arch/arm/boot/dts \
+            arch/arm/configs \
             arch/arm/include/asm/Kbuild \
+            arch/arm/include/asm/archrandom.h \
+            arch/arm/include/asm/futex.h \
+            arch/arm/include/asm/pgalloc.h \
+            arch/arm/include/asm/simd.h \
+            arch/arm/include/asm/vermagic.h \
+            arch/arm/include/asm/xor.h \
             arch/arm/include/uapi/asm/Kbuild \
+            arch/arm/include/uapi/asm/statfs.h \
             arch/arm/tools/Makefile \
-            arch/arm/tools/syscall.tbl \
-            arch/arm/tools/syscallnr.sh \
             arch/arm/tools/gen-mach-types \
             arch/arm/tools/mach-types \
+            arch/arm/tools/syscall.tbl \
+            arch/arm/tools/syscallnr.sh \
             include/asm-generic/Kbuild \
+            include/asm-generic/cfi.h \
+            include/asm-generic/early_ioremap.h \
+            include/asm-generic/flat.h \
+            include/asm-generic/local64.h \
+            include/asm-generic/module.lds.h \
+            include/asm-generic/parport.h \
+            include/asm-generic/runtime-const.h \
+            include/asm-generic/serial.h \
+            include/asm-generic/vga.h \
+            include/asm-generic/video.h \
             include/linux/compiler-version.h \
-            include/linux/license.h \
             include/linux/kbuild.h \
+            include/linux/license.h \
             include/uapi/Kbuild \
-            include/uapi/asm-generic/Kbuild
+            include/uapi/asm-generic/Kbuild \
+            include/uapi/asm-generic/msgbuf.h \
+            kernel/configs/tiny-base.config \
+            kernel/configs/tiny.config \
+            scripts/Kbuild.include \
+            scripts/Makefile \
+            scripts/Makefile.asm-headers \
+            scripts/Makefile.build \
+            scripts/Makefile.compiler \
+            scripts/Makefile.defconf \
+            scripts/Makefile.extrawarn \
+            scripts/Makefile.host \
+            scripts/Makefile.lib \
+            scripts/as-version.sh \
+            scripts/basic/Makefile \
+            scripts/basic/fixdep.c \
+            scripts/cc-version.sh \
+            scripts/checksyscalls.sh \
+            scripts/config \
+            scripts/dtc \
+            scripts/include/array_size.h \
+            scripts/include/hash.h \
+            scripts/include/hashtable.h \
+            scripts/include/list.h \
+            scripts/include/list_types.h \
+            scripts/include/xalloc.h \
+            scripts/kconfig/merge_config.sh \
+            scripts/kconfig/preprocess.h \
+            scripts/ld-version.sh \
+            scripts/min-tool-version.sh \
+            scripts/mkcompile_h \
+            scripts/mod \
+            scripts/pahole-version.sh \
+            scripts/remove-stale-files \
+            scripts/rustc-llvm-version.sh \
+            scripts/rustc-version.sh \
+            scripts/setlocalversion \
+            scripts/sorttable.c \
+            scripts/sorttable.h \
+            scripts/subarch.include \
+            scripts/syscall.tbl \
+            scripts/syscallhdr.sh \
+            scripts/syscalltbl.sh \
+            tools/include/tools
+
+# prevent warning with 'grep' when building api archive
+LX_FILES += arch/x86/entry/syscalls/syscall_32.tbl
 
 LX_SCRIPTS_KCONFIG_FILES := $(notdir $(wildcard $(LX_ABS_DIR)/scripts/kconfig/*.c)) \
                             $(notdir $(wildcard $(LX_ABS_DIR)/scripts/kconfig/*.h)) \

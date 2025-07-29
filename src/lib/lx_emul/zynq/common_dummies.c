@@ -19,6 +19,8 @@
 char __start_rodata[] = {};
 char __end_rodata[]   = {};
 
+uint8_t __dtb_empty_root_begin[] = {};
+uint8_t __dtb_empty_root_end[]   = {};
 
 #include <linux/srcu.h>
 
@@ -222,6 +224,13 @@ int arch_asym_cpu_priority(int cpu)
 {
 	lx_emul_trace_and_stop(__func__);
 	return 0;
+}
+
+
+/* kernel/sched/sched.h */
+void __dl_server_attach_root(struct sched_dl_entity *dl_se, struct rq *rq)
+{
+	lx_emul_trace_and_stop(__func__);
 }
 
 

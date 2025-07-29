@@ -13,6 +13,9 @@ LX_ENABLE += POSIX_TIMERS TMPFS DEVTMPFS DEVTMPFS_MOUNT BINFMT_SCRIPT
 # RTC stuff needed for hwclock
 LX_ENABLE += I2C RTC_CLASS RTC_DRV_DS1307 I2C_CADENCE
 
+# drivers/nvmem/core.c does not compile with 6.12, enabled by RTC_CLASS above
+LX_DISABLE += NVMEM RTC_NVMEM
+
 # performance stuff
 LX_ENABLE += SMP ARM_ZYNQ_CPUIDLE VFP VFPv3 NEON
 
