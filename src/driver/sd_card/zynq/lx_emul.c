@@ -42,9 +42,20 @@ void bd_abort_claiming(struct block_device * bdev,void * holder)
 }
 
 
-#include <linux/ioprio.h>
+#include <linux/blkdev.h>
 
-int __get_task_ioprio(struct task_struct * p)
+struct file file_dummy;
+
+struct file * bdev_file_open_by_dev(dev_t dev,blk_mode_t mode,void * holder,const struct blk_holder_ops * hops)
 {
-	return IOPRIO_DEFAULT;
+	return &file_dummy;
+}
+
+
+#include <linux/file.h>
+
+void fput(struct file * file)
+{
+	if (file != &file_dummy)
+		lx_emul_trace_and_stop(__func__);
 }

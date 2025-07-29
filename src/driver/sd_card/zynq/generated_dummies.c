@@ -1,7 +1,7 @@
 /*
  * \brief  Dummy definitions of Linux Kernel functions
  * \author Automatically generated file - do no edit
- * \date   2025-05-05
+ * \date   2025-07-28
  */
 
 #include <lx_emul.h>
@@ -23,6 +23,14 @@ struct cpumask __cpu_active_mask;
 #include <linux/cpuhotplug.h>
 
 int __cpuhp_state_remove_instance(enum cpuhp_state state,struct hlist_node * node,bool invoke)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/dma-mapping.h>
+
+void __dma_sync_sg_for_cpu(struct device * dev,struct scatterlist * sg,int nelems,enum dma_data_direction dir)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -53,7 +61,7 @@ unsigned long __per_cpu_offset[NR_CPUS] = {};
 
 #include <linux/printk.h>
 
-void __printk_safe_enter(void)
+void __printk_deferred_enter(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -61,15 +69,7 @@ void __printk_safe_enter(void)
 
 #include <linux/printk.h>
 
-void __printk_safe_exit(void)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/fs.h>
-
-void __remove_inode_hash(struct inode * inode)
+void __printk_deferred_exit(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -85,7 +85,7 @@ void __show_mem(unsigned int filter,nodemask_t * nodemask,int max_zone_idx)
 
 #include <linux/vmalloc.h>
 
-void * __vmalloc_node_range(unsigned long size,unsigned long align,unsigned long start,unsigned long end,gfp_t gfp_mask,pgprot_t prot,unsigned long vm_flags,int node,const void * caller)
+void * __vmalloc_node_range_noprof(unsigned long size,unsigned long align,unsigned long start,unsigned long end,gfp_t gfp_mask,pgprot_t prot,unsigned long vm_flags,int node,const void * caller)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -94,13 +94,6 @@ void * __vmalloc_node_range(unsigned long size,unsigned long align,unsigned long
 #include <linux/kstrtox.h>
 
 int _kstrtoul(const char * s,unsigned int base,unsigned long * res)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-extern noinline unsigned int _parse_integer(const char * s,unsigned int base,unsigned long long * p);
-noinline unsigned int _parse_integer(const char * s,unsigned int base,unsigned long long * p)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -204,9 +197,23 @@ ssize_t badblocks_store(struct badblocks * bb,const char * page,size_t len,int u
 }
 
 
+extern void bdev_drop(struct block_device * bdev);
+void bdev_drop(struct block_device * bdev)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/blkdev.h>
 
 void bdev_mark_dead(struct block_device * bdev,bool surprise)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+extern void bdev_unhash(struct block_device * bdev);
+void bdev_unhash(struct block_device * bdev)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -223,6 +230,14 @@ void bdi_put(struct backing_dev_info * bdi)
 #include <linux/backing-dev.h>
 
 void bdi_unregister(struct backing_dev_info * bdi)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/bitmap-str.h>
+
+int bitmap_parselist(const char * buf,unsigned long * maskp,int nmaskbits)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -336,6 +351,14 @@ unsigned int cpumask_any_and_distribute(const struct cpumask * src1p,const struc
 
 #include <linux/sched/topology.h>
 
+bool cpus_equal_capacity(int this_cpu,int that_cpu)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/sched/topology.h>
+
 bool cpus_share_cache(int this_cpu,int that_cpu)
 {
 	lx_emul_trace_and_stop(__func__);
@@ -345,6 +368,14 @@ bool cpus_share_cache(int this_cpu,int that_cpu)
 #include <linux/clk-provider.h>
 
 struct clk * devm_clk_register(struct device * dev,struct clk_hw * hw)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/blkdev.h>
+
+bool disk_live(struct gendisk * disk)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -390,14 +421,6 @@ unsigned long dma_get_merge_boundary(struct device * dev)
 #include <linux/dma-mapping.h>
 
 size_t dma_max_mapping_size(struct device * dev)
-{
-	lx_emul_trace_and_stop(__func__);
-}
-
-
-#include <linux/dma-mapping.h>
-
-void dma_sync_sg_for_cpu(struct device * dev,struct scatterlist * sg,int nelems,enum dma_data_direction dir)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -502,7 +525,7 @@ void folio_unlock(struct folio * folio)
 }
 
 
-#include <linux/kernel.h>
+#include <linux/string.h>
 
 int get_option(char ** str,int * pint)
 {
@@ -586,16 +609,24 @@ void __iomem * ioremap(resource_size_t res_cookie,size_t size)
 }
 
 
-#include <linux/fs.h>
-
-void iput(struct inode * inode)
+extern bool irq_wait_for_poll(struct irq_desc * desc);
+bool irq_wait_for_poll(struct irq_desc * desc)
 {
 	lx_emul_trace_and_stop(__func__);
 }
 
 
-extern bool irq_wait_for_poll(struct irq_desc * desc);
-bool irq_wait_for_poll(struct irq_desc * desc)
+#include <linux/irq_work.h>
+
+bool irq_work_queue(struct irq_work * work)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/irq_work.h>
+
+bool irq_work_queue_on(struct irq_work * work,int cpu)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -635,7 +666,7 @@ void kick_process(struct task_struct * p)
 
 #include <linux/kmsg_dump.h>
 
-void kmsg_dump(enum kmsg_dump_reason reason)
+void kmsg_dump_desc(enum kmsg_dump_reason reason,const char * desc)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -681,6 +712,14 @@ noinline int kstrtoll(const char * s,unsigned int base,long long * res)
 }
 
 
+#include <linux/rcutree.h>
+
+void kvfree_rcu_barrier(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
 #include <linux/writeback.h>
 
 void laptop_io_completion(struct backing_dev_info * info)
@@ -719,6 +758,22 @@ struct page *mem_map;
 
 extern void __init memblock_free_pages(struct page * page,unsigned long pfn,unsigned int order);
 void __init memblock_free_pages(struct page * page,unsigned long pfn,unsigned int order)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/string.h>
+
+unsigned long long memparse(const char * ptr,char ** retptr)
+{
+	lx_emul_trace_and_stop(__func__);
+}
+
+
+#include <linux/printk.h>
+
+void nbcon_atomic_flush_unsafe(void)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -796,6 +851,14 @@ int __init of_setup_earlycon(const struct earlycon_id * match,unsigned long node
 #include <linux/reboot.h>
 
 enum reboot_mode panic_reboot_mode;
+
+
+#include <linux/printk.h>
+
+void printk_legacy_allow_panic_sync(void)
+{
+	lx_emul_trace_and_stop(__func__);
+}
 
 
 extern void raw_spin_rq_lock_nested(struct rq * rq,int subclass);
@@ -878,7 +941,7 @@ void smp_call_function_many(const struct cpumask * mask,smp_call_func_t func,voi
 
 #include <linux/smp.h>
 
-int smp_call_function_single_async(int cpu,struct __call_single_data * csd)
+int smp_call_function_single_async(int cpu,call_single_data_t * csd)
 {
 	lx_emul_trace_and_stop(__func__);
 }
@@ -928,7 +991,7 @@ void tick_broadcast(const struct cpumask * mask)
 
 #include <linux/mm.h>
 
-void unpin_user_page(struct page * page)
+void unpin_user_folio(struct folio * folio,unsigned long npages)
 {
 	lx_emul_trace_and_stop(__func__);
 }

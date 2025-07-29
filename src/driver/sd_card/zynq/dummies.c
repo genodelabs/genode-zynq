@@ -29,7 +29,7 @@ int pinctrl_bind_pins(struct device * dev)
 
 #include <linux/dma-map-ops.h>
 
-void arch_setup_dma_ops(struct device * dev,u64 dma_base,u64 size,const struct iommu_ops * iommu,bool coherent)
+void arch_setup_dma_ops(struct device * dev, bool coherent)
 {
 	lx_emul_trace(__func__);
 }
@@ -212,6 +212,13 @@ struct cpumask * group_cpus_evenly(unsigned int numgrps)
 #include <linux/rcutree.h>
 
 void rcu_barrier(void)
+{
+	lx_emul_trace(__func__);
+}
+
+#include <linux/sched.h>
+
+void sched_tick(void)
 {
 	lx_emul_trace(__func__);
 }
