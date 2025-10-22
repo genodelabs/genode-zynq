@@ -22,7 +22,8 @@
 
 namespace Board {
 	using namespace Hw::Zynq_usrp_e31x_board;
-	using Pic = Hw::Gicv2;
+	using Hw::Global_interrupt_controller;
+	using Hw::Local_interrupt_controller;
 
 	static constexpr bool NON_SECURE = false;
 }

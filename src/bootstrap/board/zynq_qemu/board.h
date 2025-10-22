@@ -22,7 +22,8 @@
 
 namespace Board {
 	using namespace Hw::Zynq_qemu_board;
-	using Pic = Hw::Gicv2;
+	using Hw::Global_interrupt_controller;
+	using Hw::Local_interrupt_controller;
 	using L2_cache = Hw::Pl310;
 
 	static constexpr bool NON_SECURE = false;
