@@ -177,7 +177,7 @@ void Driver::Dma_guard::_add_range(Range range)
 	bool found = false;
 
 	/* calculate log2 size */
-	size_t size_log2 = log2(range.size);
+	size_t size_log2 = log2(range.size, 0u);
 	if ((1U << size_log2) < range.size) size_log2++;
 
 	for (size_t i=0; !found && i < NUM_SEGMENTS; i++) {
