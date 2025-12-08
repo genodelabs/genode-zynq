@@ -116,8 +116,8 @@ void Main::test_simple_transfer(size_t size, uint8_t value)
 	Platform::Dma_buffer dst_buffer { axidma.platform(), size, cache };
 
 	/* initialise src buffer */
-	Genode::memset(src_buffer.local_addr<void>(), value, size);
-	Genode::memset(dst_buffer.local_addr<void>(), value != 0 ? 0 : -1, size);
+	::memset(src_buffer.local_addr<void>(), value, size);
+	::memset(dst_buffer.local_addr<void>(), value != 0 ? 0 : -1, size);
 
 	log("initiating simple transfer of size ", (unsigned)size);
 
@@ -166,7 +166,7 @@ void Main::fill_transfers()
 {
 	/* fill all buffers */
 	while (true) {
-		Genode::memset(buffers.head().tx.local_addr<void>(), (uint8_t)counter, cur_access_size);
+		::memset(buffers.head().tx.local_addr<void>(), (uint8_t)counter, cur_access_size);
 		*buffers.head().tx.local_addr<unsigned>() = counter;
 
 		if (buffers.advance_head())
