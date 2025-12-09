@@ -69,7 +69,7 @@ install_config {
 		<binary name="zynq_sd_card"/>
 		<provides><service name="Block"/></provides>
 		<config report="yes">
-			<default-policy device="mmcblk0"/>
+			<default-policy device="mmcblk0" writeable="yes"/>
 		</config>
 		<route>
 			<service name="ROM" label="dtb">
